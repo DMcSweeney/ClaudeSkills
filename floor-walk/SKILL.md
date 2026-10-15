@@ -5,7 +5,7 @@ description: "Builds an interactive 'floor walk' review page for a set of code c
 
 # Floor Walk
 
-A floor walk is how the user reviews code. They are the shop manager walking the floor, not an inspector with a magnifying glass. Tests and the `risk-review` skill own line-level correctness. The walk answers four questions:
+A floor walk is how the user reviews code. They are the shop manager walking the floor, not an inspector with a magnifying glass. Tests and the `risk-inspector` skill own line-level correctness. The walk answers four questions:
 
 1. **Where** in the system did things move? (the floor plan)
 2. **What** changed at each place, and **why**? (the stops)
@@ -19,7 +19,7 @@ The user's own words for what overwhelmed them with PRs: too frequent, arrives t
 | Mode | When | Built from | Stops show |
 |---|---|---|---|
 | `blueprint` | Before any code is written | Per-feature plans of action, the plan/spec files, `ARCHITECTURE.md` | Planned changes, design calls, planned tests, anticipated flags |
-| `as-built` | After the code is written, before push | `git diff <base>...HEAD`, the blueprint walk (if any), test results, risk-review findings | Actual changes, evidence, deviations, full diff per stop |
+| `as-built` | After the code is written, before push | `git diff <base>...HEAD`, the blueprint walk (if any), test results, risk-inspector findings | Actual changes, evidence, deviations, full diff per stop |
 
 Used outside implementation-cycle (e.g. "walk me through branch X"), run `as-built` with no blueprint. Then `deviation` flags compare against the stated intent instead (PR description, commit messages, linked issue). If there is no stated intent, there are no deviation flags.
 
@@ -27,7 +27,7 @@ Used outside implementation-cycle (e.g. "walk me through branch X"), run `as-bui
 
 - **Floor plan source:** read `ARCHITECTURE.md` at the repo root (see the `architecture-map` skill). Its mermaid diagram is the base map. If it is missing or stale, still use what's there and verify the touched parts against the code. Don't regenerate the map here.
 - **Blueprint:** the per-feature plans of action and the feature spec files.
-- **As-built:** `git diff --stat <base>...HEAD`, then the diff itself. Also gather the test run output, the final `risk-review` findings (mapped to flags and `caught` lists by risk-review's mapping table), and the blueprint walk's data if one exists (the JSON from `.walks/<batch>/blueprint.md`, or the published page).
+- **As-built:** `git diff --stat <base>...HEAD`, then the diff itself. Also gather the test run output, the final `risk-inspector` findings (mapped to flags and `caught` lists by risk-inspector's mapping table), and the blueprint walk's data if one exists (the JSON from `.walks/<batch>/blueprint.md`, or the published page).
 
 ## Step 2 — Plan the route
 
@@ -49,7 +49,7 @@ Write for someone who knows the system but hasn't seen this work. Use short, con
   - as-built: real test names rewritten as plain sentences, with their real pass/fail status. Add behaviour receipts (a before/after of something you actually ran) where you have them. Never list a test that doesn't exist, or a run you didn't do.
   - blueprint: the tests you plan to write, with status `planned`.
 - **flags** follow the severity rules below.
-- **caught** (as-built only): risk-review findings that were found and fixed during the review loop, as `{title, severity, pass}`. They render as a collapsed "Caught in review" list, so the user can see the reviewer working without being asked to act.
+- **caught** (as-built only): risk-inspector findings that were found and fixed during the review loop, as `{title, severity, pass}`. They render as a collapsed "Caught in review" list, so the user can see the reviewer working without being asked to act.
 - **diff** (as-built only): `git diff <base>...HEAD -- <this stop's paths>`.
 
 ### Flags
@@ -59,8 +59,8 @@ Write for someone who knows the system but hasn't seen this work. Use short, con
 | Red | `deviation` | The build differs from the blueprint/spec in substance: a different approach, a missing acceptance criterion, a scope cut, extra scope. As-built only. |
 | Red | `security` | Anything touching trust boundaries: input handling, auth, secrets, data exposure, outbound calls to user-controlled targets, new dependencies. |
 | Red | `blast-radius` | Something outside this batch can now behave differently or break: changed public signatures, migrations, defaults, shared config, removed behaviour. |
-| Red | `unresolved` | A `critical`/`high` risk-review finding still open after the round cap (that isn't `security` or `blast-radius`), or a high-severity review coverage gap: a required gate that couldn't run, or untuned-language code that handles data, input or credentials. |
-| Yellow | `debt` | Shortcuts, TODOs, known limitations, deliberately deferred work, missing tests for non-core paths, and open or accepted `medium`/`low` risk-review findings. |
+| Red | `unresolved` | A `critical`/`high` risk-inspector finding still open after the round cap (that isn't `security` or `blast-radius`), or a high-severity review coverage gap: a required gate that couldn't run, or untuned-language code that handles data, input or credentials. |
+| Yellow | `debt` | Shortcuts, TODOs, known limitations, deliberately deferred work, missing tests for non-core paths, and open or accepted `medium`/`low` risk-inspector findings. |
 
 - The user must mark every red flag **OK** or **Change this**. Yellow flags never block.
 - Don't invent flags to look thorough. Don't drop or soften flags to make the walk look clean. A walk with zero red flags is fine when true.

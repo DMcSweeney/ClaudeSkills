@@ -1,0 +1,677 @@
+<title>Checkout Reliability Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root {
+  --ground: #F3F5F1;
+  --surface: #FFFFFF;
+  --ink: #1C2420;
+  --muted: #5B6862;
+  --rule: #D7DDD8;
+  --route: #0F7B74;
+  --route-soft: #DCEFEC;
+  --red: #B93228;
+  --red-soft: #F8E3E0;
+  --yellow: #9A6E00;
+  --yellow-soft: #F7EDCF;
+  --ok: #2B7A4B;
+  --ok-soft: #DDF0E3;
+  --add: #E3F3E6;
+  --del: #F8E4E1;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #121715; --surface: #1A201E; --ink: #E4EBE7; --muted: #98A59F; --rule: #2B3430;
+    --route: #4CC0B4; --route-soft: #173532;
+    --red: #F07A6E; --red-soft: #3A1E1B; --yellow: #E2B54A; --yellow-soft: #352C14;
+    --ok: #63C68D; --ok-soft: #173123; --add: #16301E; --del: #3A1F1C;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #121715; --surface: #1A201E; --ink: #E4EBE7; --muted: #98A59F; --rule: #2B3430;
+  --route: #4CC0B4; --route-soft: #173532;
+  --red: #F07A6E; --red-soft: #3A1E1B; --yellow: #E2B54A; --yellow-soft: #352C14;
+  --ok: #63C68D; --ok-soft: #173123; --add: #16301E; --del: #3A1F1C;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
+.wrap { max-width: 880px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 140px; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(26px, 4.4vw, 38px); font-weight: 750; font-stretch: 85%; letter-spacing: -0.01em; }
+h2 { font-size: 22px; font-weight: 700; font-stretch: 88%; }
+h3 { font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-family: var(--font-body); }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+a { color: var(--route); }
+:focus-visible { outline: 2px solid var(--route); outline-offset: 2px; border-radius: 4px; }
+
+.eyebrow { font: 600 12px/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--route); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.example-tag { background: var(--yellow-soft); color: var(--yellow); padding: 3px 7px; border-radius: 4px; letter-spacing: 0.06em; }
+.masthead { display: grid; gap: 14px; }
+.lede { color: var(--muted); font-size: 16px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 13px; }
+.meta b { color: var(--ink); font-weight: 500; }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
+.features { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.features li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline; }
+.fid { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.counts { display: flex; gap: 18px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.count { display: grid; gap: 2px; }
+.count strong { font: 700 28px/1 var(--font-display); font-stretch: 85%; }
+.count span { font-size: 12px; color: var(--muted); }
+.count.red strong { color: var(--red); }
+.count.yellow strong { color: var(--yellow); }
+
+.pill { font: 600 11px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; white-space: nowrap; background: var(--route-soft); color: var(--route); }
+.pill.deviated, .pill.removed, .pill.fail { background: var(--red-soft); color: var(--red); }
+.pill.dropped, .pill.planned { background: var(--yellow-soft); color: var(--yellow); }
+.pill.built, .pill.pass { background: var(--ok-soft); color: var(--ok); }
+
+.banner { border-radius: 10px; padding: 12px 16px; font-weight: 500; }
+.banner.approved { background: var(--ok-soft); color: var(--ok); }
+.banner.changes { background: var(--red-soft); color: var(--red); }
+
+.floorplan { display: grid; gap: 12px; }
+.floorplan figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; overflow-x: auto; }
+.floorplan pre.mermaid { margin: 0; background: transparent; text-align: center; }
+.floorplan figcaption { color: var(--muted); font-size: 13px; padding-top: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--route); vertical-align: middle; margin-right: 6px; }
+.legend i.dash { border-top-style: dashed; }
+
+.route { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: none; }
+.route li a { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
+.route li a:hover { background: var(--surface); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.red { background: var(--red); } .dot.yellow { background: var(--yellow); }
+.dots { display: flex; gap: 4px; }
+.num { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--route); color: var(--route); display: grid; place-items: center; font: 700 14px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+
+.stops { display: grid; gap: 28px; }
+.stop { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 22px; display: grid; gap: 18px; scroll-margin-top: 16px; }
+.stop-head { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
+.stop-head .num { width: 38px; height: 38px; font-size: 17px; background: var(--route); color: var(--surface); border: 0; }
+.stop-title { display: grid; gap: 6px; }
+.stop-sub { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
+.twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.block { display: grid; gap: 8px; }
+.block ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.decision { border-left: 3px solid var(--rule); padding-left: 12px; display: grid; gap: 2px; }
+.decision .alt { color: var(--muted); font-size: 13px; }
+.proof { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.proof li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; }
+.ba { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 14px; }
+.ba dt { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 2px; }
+.ba dd { margin: 0; }
+
+.flags { display: grid; gap: 10px; }
+.flag { border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; background: var(--yellow-soft); }
+.flag.red { background: var(--red-soft); }
+.flag-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+.flag-label { font: 700 11px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow); }
+.flag.red .flag-label { color: var(--red); }
+.flag-title { font-weight: 600; }
+.flag-detail { font-size: 14px; }
+.verdict { display: inline-flex; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.verdict button { font: 500 13px/1 var(--font-body); padding: 8px 12px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.verdict button + button { border-left: 1px solid var(--rule); }
+.verdict button[aria-pressed="true"].ok { background: var(--ok); color: var(--surface); }
+.verdict button[aria-pressed="true"].change { background: var(--red); color: var(--surface); }
+.verdict button:disabled { cursor: not-allowed; opacity: 0.6; }
+.note { width: 100%; min-height: 64px; font: 14px/1.5 var(--font-body); padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); color: var(--ink); resize: vertical; }
+.awareness { font-size: 12px; color: var(--muted); }
+
+.ask { display: grid; gap: 8px; }
+.btn { font: 600 13px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; justify-self: start; }
+.btn.primary { background: var(--route); border-color: var(--route); color: var(--surface); }
+.btn.danger { background: var(--red); border-color: var(--red); color: var(--surface); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.hint { font-size: 13px; color: var(--muted); }
+
+details.caught summary { cursor: pointer; font-size: 14px; color: var(--muted); }
+details.caught ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+details.caught li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; font-size: 14px; }
+.sev { font: 600 11px/1 var(--font-mono); text-transform: uppercase; color: var(--muted); min-width: 64px; }
+details.diff { border-top: 1px solid var(--rule); padding-top: 12px; }
+details.diff summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--muted); }
+details.diff summary .mono { color: var(--ink); }
+.diff-body { margin-top: 10px; overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; }
+.diff-body pre { margin: 0; font: 12.5px/1.5 var(--font-mono); padding: 10px 0; min-width: max-content; }
+.diff-body pre span { display: block; padding: 0 12px; white-space: pre; }
+.diff-body .a { background: var(--add); }
+.diff-body .d { background: var(--del); }
+.diff-body .h { color: var(--route); font-weight: 500; }
+.diff-body .f { color: var(--ink); font-weight: 600; background: var(--ground); }
+
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--rule); padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.bar-inner { max-width: 880px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.progress { display: grid; gap: 6px; min-width: 200px; flex: 1; }
+.track { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.track div { height: 100%; background: var(--route); width: 0; transition: width 200ms ease; }
+.confirm { display: grid; gap: 10px; width: 100%; }
+@media (prefers-reduced-motion: reduce) { .track div { transition: none; } html { scroll-behavior: auto; } }
+@media (max-width: 520px) { .stop { padding: 16px; } .wrap { padding-inline: 16px; } }
+</style>
+
+<!-- WALK DATA: the floor-walk skill replaces this JSON. Schema: references/walk-data.md -->
+<script type="application/json" id="walk-data">
+{
+  "example": true,
+  "kind": "as-built",
+  "batch": { "id": "B02", "name": "Checkout reliability" },
+  "headline": "Payments now retry safely and tell merchants when an order settles",
+  "repo": "acme/shop",
+  "branch": "batch/b02-checkout-reliability",
+  "base": "main",
+  "generated_at": "2026-10-15",
+  "blueprint_url": "",
+  "features": [
+    { "id": "F004", "name": "Idempotent payment retries", "status": "built" },
+    { "id": "F005", "name": "Order-settled webhooks", "status": "deviated" },
+    { "id": "F006", "name": "Retry dashboard metric", "status": "dropped", "note": "Moved to the next batch; needs the metrics service upgrade first." }
+  ],
+  "floorplan_caption": "Payments is the only existing service that changes. Two new pieces hang off it: an event on the bus and a webhook dispatcher.",
+  "stops": [
+    {
+      "id": "s1",
+      "title": "Payments service",
+      "component": "services/payments",
+      "change": "modified",
+      "features": ["F004"],
+      "what": "Charge requests now carry an idempotency key derived from the order ID and attempt number. Retries reuse the key, so the provider never charges twice.",
+      "why": "A timeout followed by a retry could double-charge a customer. Spec F004 requires at most one successful charge per order.",
+      "ripple": [
+        "The Orders API must send the order ID on every charge call. It already does, but now it is required.",
+        "Provider rate limits are unchanged; retries still back off exponentially."
+      ],
+      "decisions": [
+        { "choice": "Key = order ID + attempt number, hashed", "alternatives": "Random UUID stored per order", "why": "Needs no new storage and is reproducible from logs." }
+      ],
+      "proof": [
+        { "type": "test", "text": "A retried charge with the same key returns the original result", "status": "pass" },
+        { "type": "test", "text": "Charging without an order ID is rejected before reaching the provider", "status": "pass" },
+        { "type": "behaviour", "text": "Provider sandbox, forced timeout on first attempt", "before": "2 charges recorded", "after": "1 charge recorded, retry returns the same charge ID" }
+      ],
+      "flags": [
+        { "id": "s1-blast", "level": "red", "category": "blast-radius", "title": "Charge calls without an order ID now fail", "detail": "Two internal scripts in tools/ call charge() directly without an order ID. They will start failing. Neither runs in production." }
+      ],
+      "caught": [
+        { "title": "Customer email was included in the retry warning log line", "severity": "critical", "pass": "data" },
+        { "title": "Idempotency key built with MD5; switched to SHA-256", "severity": "medium", "pass": "security" }
+      ],
+      "diff": "diff --git a/services/payments/charge.py b/services/payments/charge.py\n@@ -14,9 +14,17 @@ def charge(order, amount, attempt=0):\n-    return provider.charge(amount, customer=order.customer_id)\n+    if not order.id:\n+        raise MissingOrderId(\"charge() requires an order id\")\n+    key = idempotency_key(order.id, attempt)\n+    return provider.charge(\n+        amount,\n+        customer=order.customer_id,\n+        idempotency_key=key,\n+    )\n"
+    },
+    {
+      "id": "s2",
+      "title": "Event bus: payment.settled",
+      "component": "services/payments/events.py",
+      "change": "new",
+      "features": ["F005"],
+      "what": "Payments publishes a payment.settled event when the provider confirms a charge.",
+      "why": "Webhooks need a trigger that fires once per settled payment, not once per attempt.",
+      "ripple": ["Any future consumer can subscribe to settlements without touching Payments."],
+      "decisions": [],
+      "proof": [
+        { "type": "test", "text": "One settled charge publishes exactly one event, even after retries", "status": "pass" }
+      ],
+      "flags": [
+        { "id": "s2-deviation", "level": "red", "category": "deviation", "title": "The event is published synchronously, not via the outbox", "detail": "The blueprint said the outbox table. The outbox migration conflicted with F006's schema, so this publishes inline. A crash between charge and publish would lose the event." },
+        { "id": "s2-debt", "level": "yellow", "category": "debt", "title": "No dead-letter queue yet", "detail": "Failed publishes are logged, not retried. Fine at current volume." }
+      ],
+      "diff": "diff --git a/services/payments/events.py b/services/payments/events.py\nnew file mode 100644\n@@ -0,0 +1,9 @@\n+from bus import publish\n+\n+\n+def payment_settled(charge):\n+    publish(\"payment.settled\", {\n+        \"order_id\": charge.order_id,\n+        \"charge_id\": charge.id,\n+        \"amount\": charge.amount,\n+    })\n"
+    },
+    {
+      "id": "s3",
+      "title": "Webhook dispatcher",
+      "component": "services/webhooks",
+      "change": "new",
+      "features": ["F005"],
+      "what": "A new worker listens for payment.settled and POSTs a signed payload to each merchant's registered URL.",
+      "why": "Merchants currently poll for order status. F005 lets them react the moment money settles.",
+      "ripple": ["Adds outbound traffic to merchant endpoints; a slow merchant only delays its own queue."],
+      "decisions": [
+        { "choice": "HMAC-SHA256 signature in a header", "alternatives": "Mutual TLS", "why": "Merchants can verify with ten lines of code." }
+      ],
+      "proof": [
+        { "type": "test", "text": "Payload signature verifies with the merchant's secret", "status": "pass" },
+        { "type": "test", "text": "Merchant URLs pointing at private IP ranges are refused", "status": "pass" }
+      ],
+      "flags": [
+        { "id": "s3-security", "level": "red", "category": "security", "title": "Outbound requests to merchant-supplied URLs", "detail": "Guarded against private IP ranges (SSRF) and capped at 5s timeouts. DNS rebinding is not handled: the IP is checked once, before connecting." }
+      ],
+      "caught": [
+        { "title": "Webhook secret compared with == (timing leak); now hmac.compare_digest", "severity": "high", "pass": "security" },
+        { "title": "Dispatcher opened a new HTTP session per event", "severity": "medium", "pass": "efficiency" }
+      ],
+      "diff": "diff --git a/services/webhooks/dispatch.py b/services/webhooks/dispatch.py\nnew file mode 100644\n@@ -0,0 +1,6 @@\n+def dispatch(event, merchant):\n+    url = merchant.webhook_url\n+    if resolves_to_private_ip(url):\n+        raise UnsafeWebhookUrl(url)\n+    body = sign(event, merchant.secret)\n+    return http.post(url, body, timeout=5)\n"
+    },
+    {
+      "id": "s4",
+      "title": "Housekeeping",
+      "component": "config, docs, tests/fixtures",
+      "change": "modified",
+      "features": ["F004", "F005"],
+      "what": "New settings for webhook timeouts, a fixtures update and the ARCHITECTURE.md refresh.",
+      "why": "Mechanical follow-on changes; nothing here alters behaviour on its own.",
+      "ripple": [],
+      "decisions": [],
+      "proof": [],
+      "flags": [],
+      "diff": ""
+    }
+  ]
+}
+</script>
+
+<main class="wrap">
+  <header class="masthead" id="masthead"></header>
+  <section class="summary" id="summary" aria-label="Batch summary"></section>
+  <div id="review-banner" hidden></div>
+
+  <section class="floorplan" aria-labelledby="fp-h">
+    <h2 id="fp-h">Floor plan</h2>
+    <figure data-comment-target>
+<!-- FLOOR PLAN: the floor-walk skill replaces this mermaid block. -->
+<pre class="mermaid">
+flowchart LR
+  web[Storefront web] -->|POST /orders| api[Orders API]
+  api -->|charge| pay["1 · Payments service"]
+  api --> odb[(Orders DB)]
+  pay -->|charges| psp[(Payment provider)]
+  pay -.->|"new: payment.settled"| bus["2 · Event bus"]
+  bus -.->|new| hooks["3 · Webhook dispatcher"]
+  hooks -.->|signed POST| merchant[Merchant endpoints]
+  classDef changed stroke:#0F7B74,stroke-width:3px;
+  classDef added stroke:#0F7B74,stroke-width:3px,stroke-dasharray:6 4;
+  class pay changed;
+  class bus,hooks added;
+</pre>
+      <figcaption id="fp-caption"></figcaption>
+    </figure>
+    <div class="legend"><span><i></i>Changed component</span><span><i class="dash"></i>New component or connection</span><span>Numbers are stops on the walk</span></div>
+  </section>
+
+  <section aria-labelledby="route-h" class="block">
+    <h2 id="route-h">Route</h2>
+    <ol class="route" id="route"></ol>
+  </section>
+
+  <section class="stops" id="stops" aria-label="Stops"></section>
+</main>
+
+<div class="bar" id="bar">
+  <div class="bar-inner" id="bar-inner"></div>
+</div>
+
+<script>
+(function () {
+  const walk = JSON.parse(document.getElementById("walk-data").textContent);
+  const isBlueprint = walk.kind === "blueprint";
+  const stops = walk.stops || [];
+  const allFlags = stops.flatMap((s) => (s.flags || []).map((f) => ({ ...f, stop: s })));
+  const redFlags = allFlags.filter((f) => f.level === "red");
+  const yellowFlags = allFlags.filter((f) => f.level === "yellow");
+
+  const state = { acks: {}, review: null, db: null, uid: null, comments: null, canWrite: false, confirming: false };
+
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === undefined || v === null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    }
+    return el;
+  }
+
+  const CATEGORY = { "deviation": "Deviation from plan", "security": "Security & data", "blast-radius": "Blast radius", "debt": "Debt & shortcuts", "unresolved": "Unresolved review issue" };
+  const CHANGE = { "new": "New", "modified": "Changed", "removed": "Removed", "unchanged": "Touched" };
+
+  // ---------- masthead + summary ----------
+  function renderMasthead() {
+    const m = document.getElementById("masthead");
+    m.replaceChildren(
+      h("div", { class: "eyebrow" },
+        isBlueprint ? "Blueprint walk" : "As-built walk",
+        h("span", { "aria-hidden": "true" }, "·"),
+        `${walk.batch.id} ${walk.batch.name}`,
+        walk.example ? h("span", { class: "example-tag" }, "Example data") : null),
+      h("h1", {}, walk.headline),
+      h("p", { class: "lede" }, isBlueprint
+        ? "The planned route through the system, before any code is written. Redirect anything here and it costs nothing."
+        : "What was actually built. Anything that differs from the blueprint is flagged red."),
+      h("div", { class: "meta" },
+        walk.repo ? h("span", {}, "Repo ", h("b", { class: "mono" }, walk.repo)) : null,
+        walk.branch ? h("span", {}, "Branch ", h("b", { class: "mono" }, walk.branch), " → ", h("b", { class: "mono" }, walk.base || "main")) : null,
+        walk.generated_at ? h("span", {}, "Prepared ", h("b", {}, walk.generated_at)) : null,
+        walk.blueprint_url ? h("a", { href: walk.blueprint_url, target: "_blank", rel: "noopener" }, "Open the blueprint walk") : null)
+    );
+  }
+
+  function renderSummary() {
+    const deviations = allFlags.filter((f) => f.category === "deviation").length;
+    const s = document.getElementById("summary");
+    s.replaceChildren(
+      h("div", { class: "panel" },
+        h("h3", {}, isBlueprint ? "Features in this batch" : "Features built"),
+        h("ul", { class: "features" }, (walk.features || []).map((f) =>
+          h("li", {}, h("span", { class: "fid" }, f.id),
+            h("span", {}, f.name, f.note ? h("div", { class: "hint" }, f.note) : null),
+            h("span", { class: `pill ${f.status}` }, f.status))))),
+      h("div", { class: "panel" },
+        h("h3", {}, "What needs your eyes"),
+        h("div", { class: "counts" },
+          h("div", { class: "count red" }, h("strong", {}, redFlags.length), h("span", {}, "red flags to mark")),
+          h("div", { class: "count yellow" }, h("strong", {}, yellowFlags.length), h("span", {}, "yellow, for awareness")),
+          !isBlueprint ? h("div", { class: "count" }, h("strong", {}, deviations), h("span", {}, "deviations from plan")) : null,
+          h("div", { class: "count" }, h("strong", {}, stops.length), h("span", {}, "stops"))))
+    );
+    document.getElementById("fp-caption").textContent = walk.floorplan_caption || "";
+  }
+
+  // ---------- route ----------
+  function renderRoute() {
+    document.getElementById("route").replaceChildren(...stops.map((s, i) =>
+      h("li", {}, h("a", { href: `#stop-${s.id}` },
+        h("span", { class: "num" }, i + 1),
+        h("span", {}, h("strong", {}, s.title), " ", h("span", { class: "hint mono" }, s.component || "")),
+        h("span", { class: "dots", "aria-label": flagSummary(s) },
+          (s.flags || []).map((f) => h("span", { class: `dot ${f.level}` })))))));
+  }
+  function flagSummary(s) {
+    const r = (s.flags || []).filter((f) => f.level === "red").length;
+    const y = (s.flags || []).filter((f) => f.level === "yellow").length;
+    return `${r} red, ${y} yellow flags`;
+  }
+
+  // ---------- stops ----------
+  function renderStops() {
+    document.getElementById("stops").replaceChildren(...stops.map(renderStop));
+  }
+
+  function renderStop(s, i) {
+    const el = h("article", { class: "stop", id: `stop-${s.id}`, "data-comment-target": true },
+      h("div", { class: "stop-head" },
+        h("span", { class: "num", "aria-hidden": "true" }, i + 1),
+        h("div", { class: "stop-title" },
+          h("h2", {}, s.title),
+          h("div", { class: "stop-sub" },
+            h("span", { class: `pill ${s.change}` }, CHANGE[s.change] || s.change),
+            s.component ? h("span", { class: "mono" }, s.component) : null,
+            (s.features || []).length ? h("span", {}, s.features.join(", ")) : null))),
+      h("div", { class: "twocol" },
+        h("div", { class: "block" }, h("h3", {}, isBlueprint ? "What will change" : "What changed"), h("p", {}, s.what)),
+        h("div", { class: "block" }, h("h3", {}, "Why"), h("p", {}, s.why))),
+      (s.ripple || []).length ? h("div", { class: "block" }, h("h3", {}, "Knock-on effects"),
+        h("ul", {}, s.ripple.map((r) => h("li", {}, r)))) : null,
+      (s.decisions || []).length ? h("div", { class: "block" }, h("h3", {}, "Design calls"),
+        s.decisions.map((d) => h("div", { class: "decision" },
+          h("strong", {}, d.choice),
+          d.alternatives ? h("span", { class: "alt" }, "Instead of: ", d.alternatives) : null,
+          d.why ? h("span", {}, d.why) : null))) : null,
+      (s.proof || []).length ? h("div", { class: "block" }, h("h3", {}, isBlueprint ? "How we'll know it works" : "Evidence it works"),
+        h("ul", { class: "proof" }, s.proof.map(renderProof))) : null,
+      (s.flags || []).length ? h("div", { class: "flags" }, s.flags.map((f) => renderFlag(f))) : null,
+      renderCaught(s),
+      renderAsk(s, i),
+      renderDiff(s));
+    return el;
+  }
+
+  function renderProof(p) {
+    const status = p.status || (isBlueprint ? "planned" : "");
+    if (p.type === "behaviour") {
+      return h("li", {}, h("span", { class: `pill ${status}` }, status || "run"),
+        h("div", {}, h("div", {}, p.text),
+          h("dl", { class: "ba" }, h("dt", {}, "Before"), h("dd", {}, p.before || "—"), h("dt", {}, "After"), h("dd", {}, p.after || "—"))));
+    }
+    return h("li", {}, h("span", { class: `pill ${status}` }, status || "test"), h("span", {}, p.text));
+  }
+
+  function renderFlag(f) {
+    const label = `${f.level === "red" ? "Red" : "Yellow"} · ${CATEGORY[f.category] || f.category}`;
+    const card = h("div", { class: `flag ${f.level}`, id: `flag-${f.id}` },
+      h("div", { class: "flag-top" }, h("span", { class: "flag-label" }, label),
+        f.level === "red" ? verdictControl(f) : h("span", { class: "awareness" }, "No action needed")),
+      h("div", { class: "flag-title" }, f.title),
+      f.detail ? h("div", { class: "flag-detail" }, f.detail) : null);
+    if (f.level === "red") {
+      const ack = state.acks[f.id];
+      if (ack && ack.verdict === "change") {
+        const ta = h("textarea", { class: "note", id: `note-${f.id}`, placeholder: "What should change? (optional, but it helps)", maxlength: "2000", disabled: !state.canWrite });
+        ta.value = ack.note || "";
+        ta.addEventListener("input", () => scheduleNote(f.id, ta.value));
+        card.append(ta);
+      }
+    }
+    return card;
+  }
+
+  function verdictControl(f) {
+    const ack = state.acks[f.id];
+    const mk = (v, text) => h("button", {
+      type: "button", class: v, "aria-pressed": ack && ack.verdict === v ? "true" : "false",
+      disabled: !state.canWrite || state.review,
+      onclick: () => setVerdict(f.id, v)
+    }, text);
+    return h("div", { class: "verdict", role: "group", "aria-label": `Your call on: ${f.title}` }, mk("ok", "OK"), mk("change", "Change this"));
+  }
+
+  function renderAsk(s, i) {
+    if (!state.comments) return null;
+    const wrap = h("div", { class: "ask" });
+    const open = h("button", { type: "button", class: "btn", onclick: () => openAsk() }, state.canSend ? "Ask Claude about this stop" : "Comment on this stop");
+    wrap.append(open);
+    function openAsk() {
+      const stopEl = document.getElementById(`stop-${s.id}`);
+      if (!state.canSend) {
+        state.comments.openComposer({ element: stopEl }).catch(() => { open.disabled = true; });
+        return;
+      }
+      const ta = h("textarea", { class: "note", id: `ask-${s.id}`, placeholder: "e.g. What happens to in-flight orders during deploy?", maxlength: "3500" });
+      const msg = h("span", { class: "hint", role: "status" });
+      const send = h("button", { type: "button", class: "btn primary", onclick: async () => {
+        const text = ta.value.trim();
+        if (!text) { msg.textContent = "Type a question first."; return; }
+        send.disabled = true; msg.textContent = "Sending…";
+        try {
+          const anchor = await state.comments.anchorFor(stopEl);
+          await state.comments.sendToClaude({ anchor, text: `${text}\n\n(Asked on a floor-walk page, about stop ${i + 1}: ${s.title}${s.component ? " (" + s.component + ")" : ""}. Answer about what this stop changes, using the repo.)` });
+          ta.value = ""; msg.textContent = "Sent. Claude will reply in the comment thread on this stop.";
+        } catch (e) {
+          msg.textContent = e && e.code === "consent_required" ? "Not sent: commenting from this page needs your permission." : "Not sent. Your question is still here; try again in a moment.";
+        } finally { send.disabled = false; }
+      } }, "Send to Claude");
+      wrap.replaceChildren(ta, h("div", { style: "display:flex;gap:12px;align-items:center;flex-wrap:wrap" }, send, msg));
+      ta.focus();
+    }
+    return wrap;
+  }
+
+  function renderCaught(s) {
+    const c = s.caught || [];
+    if (!c.length) return null;
+    return h("details", { class: "caught" },
+      h("summary", {}, `Caught in review · ${c.length} fixed before you saw it`),
+      h("ul", {}, c.map((x) => h("li", {}, h("span", { class: "sev" }, x.severity || ""),
+        h("span", {}, x.title, x.pass ? h("span", { class: "hint" }, ` · ${x.pass}`) : null)))));
+  }
+
+  function renderDiff(s) {
+    if (!s.diff) return null;
+    const lines = s.diff.replace(/\n$/, "").split("\n");
+    let add = 0, del = 0; const files = new Set();
+    const spans = lines.map((ln) => {
+      let c = "";
+      if (ln.startsWith("diff --git")) { c = "f"; const m = ln.match(/ b\/(.+)$/); if (m) files.add(m[1]); }
+      else if (ln.startsWith("@@")) c = "h";
+      else if (ln.startsWith("+") && !ln.startsWith("+++")) { c = "a"; add++; }
+      else if (ln.startsWith("-") && !ln.startsWith("---")) { c = "d"; del++; }
+      return h("span", { class: c }, ln || " ");
+    });
+    return h("details", { class: "diff" },
+      h("summary", {}, "Full diff · ", h("span", { class: "mono" }, `${files.size} file${files.size === 1 ? "" : "s"}, +${add} −${del}`)),
+      h("div", { class: "diff-body" }, h("pre", {}, spans)));
+  }
+
+  // ---------- review bar ----------
+  function renderBar() {
+    const bar = document.getElementById("bar-inner");
+    const marked = redFlags.filter((f) => state.acks[f.id]).length;
+    const changes = redFlags.filter((f) => state.acks[f.id] && state.acks[f.id].verdict === "change");
+    const pct = redFlags.length ? Math.round((marked / redFlags.length) * 100) : 100;
+
+    if (state.review) {
+      bar.replaceChildren(h("span", {}, state.review.verdict === "approved"
+        ? "Review finished: approved."
+        : `Review finished: ${state.review.changes.length} change${state.review.changes.length === 1 ? "" : "s"} requested.`),
+        h("span", { class: "hint" }, "Claude picks it up from here."));
+      return;
+    }
+    if (!state.db) {
+      bar.replaceChildren(h("span", { class: "hint" }, "Marking flags is unavailable in this view. Read the walk, then tell Claude your calls in the terminal."));
+      return;
+    }
+    if (state.confirming) {
+      const note = h("textarea", { class: "note", id: "final-note", placeholder: "Anything else for Claude? (optional)", maxlength: "2000" });
+      const msg = h("span", { class: "hint", role: "status" });
+      const go = h("button", { type: "button", class: changes.length ? "btn danger" : "btn primary", onclick: () => finish(note.value, msg, go) },
+        changes.length ? `Confirm: send back with ${changes.length} change${changes.length === 1 ? "" : "s"}` : "Confirm: approve this walk");
+      bar.replaceChildren(h("div", { class: "confirm" }, note,
+        h("div", { style: "display:flex;gap:10px;flex-wrap:wrap;align-items:center" }, go,
+          h("button", { type: "button", class: "btn", onclick: () => { state.confirming = false; renderBar(); } }, "Back"), msg)));
+      return;
+    }
+    const ready = marked === redFlags.length;
+    bar.replaceChildren(
+      h("div", { class: "progress" },
+        h("span", {}, redFlags.length ? `Red flags marked: ${marked} of ${redFlags.length}` : "No red flags on this walk"),
+        h("div", { class: "track", "aria-hidden": "true" }, h("div", { style: `width:${pct}%` }))),
+      h("button", { type: "button", class: changes.length ? "btn danger" : "btn primary", disabled: !ready || !state.canWrite,
+        onclick: () => { state.confirming = true; renderBar(); } },
+        !ready ? "Mark every red flag to finish" : changes.length ? `Send back with ${changes.length} change${changes.length === 1 ? "" : "s"}` : "Approve walk"));
+  }
+
+  async function finish(noteText, msg, btn) {
+    btn.disabled = true; msg.textContent = "Saving…";
+    const changes = redFlags.filter((f) => state.acks[f.id] && state.acks[f.id].verdict === "change").map((f) => f.id);
+    const verdict = changes.length ? "changes_requested" : "approved";
+    const review = { verdict, changes, note: noteText.trim(), by: state.uid, at: new Date().toISOString() };
+    try {
+      await state.db.doc("review/state").set(review);
+    } catch (e) {
+      msg.textContent = "Not saved. Check your connection and try again."; btn.disabled = false; return;
+    }
+    let told = false;
+    if (state.comments && state.canSend) {
+      const summary = verdict === "approved"
+        ? `Review finished: walk approved.${review.note ? " Note: " + review.note : ""}`
+        : `Review finished: ${changes.length} change(s) requested on ${changes.join(", ")}. Notes are on each flag.${review.note ? " Note: " + review.note : ""}`;
+      try {
+        const anchor = await state.comments.anchorFor(document.getElementById("masthead"));
+        await state.comments.sendToClaude({ anchor, text: summary });
+        told = true;
+      } catch (e) { /* fall through to the terminal hint */ }
+    }
+    state.review = review; state.confirming = false;
+    renderBar(); rerenderFlags(); renderBanner();
+    if (!told) {
+      document.getElementById("bar-inner").append(h("span", { class: "hint" }, "Saved. Tell Claude in the terminal that you've finished the review."));
+    }
+  }
+
+  function renderBanner() {
+    const b = document.getElementById("review-banner");
+    if (!state.review) { b.hidden = true; return; }
+    b.hidden = false;
+    b.className = `banner ${state.review.verdict === "approved" ? "approved" : "changes"}`;
+    b.textContent = state.review.verdict === "approved"
+      ? `Approved ${state.review.at ? state.review.at.slice(0, 10) : ""}.`
+      : `Sent back with ${state.review.changes.length} change${state.review.changes.length === 1 ? "" : "s"} requested.`;
+  }
+
+  // ---------- writes ----------
+  const queues = {};
+  function enqueue(id, fn) {
+    queues[id] = (queues[id] || Promise.resolve()).then(fn, fn);
+    return queues[id];
+  }
+  async function setVerdict(flagId, verdict) {
+    if (!state.db || !state.canWrite || state.review) return;
+    const prev = state.acks[flagId] || {};
+    const next = { verdict, note: verdict === "change" ? (prev.note || "") : "", by: state.uid, at: new Date().toISOString() };
+    state.acks[flagId] = next;
+    rerenderFlags(); renderBar();
+    enqueue(flagId, () => state.db.collection("acks").doc(flagId).set(next)).catch((e) => {
+      if (e && e.code === "invalid_argument") { state.canWrite = false; rerenderFlags(); renderBar(); }
+    });
+  }
+  const noteTimers = {};
+  function scheduleNote(flagId, text) {
+    clearTimeout(noteTimers[flagId]);
+    noteTimers[flagId] = setTimeout(() => {
+      const ack = state.acks[flagId];
+      if (!ack || ack.note === text) return;
+      ack.note = text;
+      enqueue(flagId, () => state.db.collection("acks").doc(flagId).set({ ...ack })).catch(() => {});
+    }, 700);
+  }
+
+  function rerenderFlags() {
+    for (const f of redFlags) {
+      const old = document.getElementById(`flag-${f.id}`);
+      if (!old) continue;
+      const focusedNote = document.activeElement && document.activeElement.id === `note-${f.id}`;
+      if (focusedNote) continue; // never yank a textarea out from under the reviewer
+      old.replaceWith(renderFlag(f));
+    }
+  }
+
+  // ---------- boot ----------
+  renderMasthead(); renderSummary(); renderRoute(); renderStops(); renderBar();
+
+  (async () => {
+    const cl = window.claude;
+    if (!cl || !cl.use) return;
+    const [db, user, comments] = await Promise.all([cl.use("db"), cl.use("user"), cl.use("comments")]);
+    state.db = db; state.comments = comments;
+    if (user) {
+      state.uid = await user.id();
+      const can = await user.can("data.write");
+      state.canWrite = !!db && can !== false;
+    }
+    if (comments && comments.canSendToClaude) {
+      try { state.canSend = (await comments.canSendToClaude()) === "available"; } catch (e) { state.canSend = false; }
+    }
+    renderStops(); renderBar();
+    if (!db) return;
+    db.collection("acks").onSnapshot((snap) => {
+      const acks = {};
+      for (const d of snap.docs) acks[d.id] = d.data();
+      for (const id of Object.keys(acks)) {
+        const mine = state.acks[id];
+        if (mine && acks[id].at && mine.at && mine.at > acks[id].at) acks[id] = mine;
+      }
+      state.acks = acks; rerenderFlags(); renderBar();
+    }, () => {});
+    db.doc("review/state").onSnapshot((snap) => {
+      state.review = snap.exists ? snap.data() : null;
+      renderBanner(); renderBar(); rerenderFlags();
+    }, () => {});
+  })();
+})();
+</script>

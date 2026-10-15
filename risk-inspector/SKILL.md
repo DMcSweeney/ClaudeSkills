@@ -1,9 +1,9 @@
 ---
-name: risk-review
+name: risk-inspector
 description: "Rigorous, risk-averse code review for software that handles sensitive data. Runs in the background with no user interaction: an independent reviewer subagent runs automated gates (secrets, static analysis, dependency audit, shell and SQL linters) and six review passes (sensitive-data handling, security, correctness, design and blast radius, efficiency, readability), then a second subagent tries to disprove each finding. Unresolved findings become flags on a floor walk, and fixed ones appear there as 'caught in review'. Used by implementation-cycle after each feature's tests pass. Also use it when the user asks to review, audit or security-check a branch, PR or set of changes."
 ---
 
-# Risk Review
+# Risk Inspector
 
 An independent, risk-averse reviewer for code that will handle sensitive data. The user never interacts with it directly. Everything it finds reaches them through a floor walk (the `floor-walk` skill): unresolved issues as flags they sign off, and resolved ones as a quiet "caught in review" list.
 

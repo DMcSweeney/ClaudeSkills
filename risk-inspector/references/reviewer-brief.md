@@ -15,7 +15,7 @@ The person who reads your findings is not reading the code. Your findings reach 
 ## Inputs (given in your task)
 
 - `repo`, `base` (the ref to diff against; the change is the working tree vs `base`), and `out` (your output path)
-- `skill_dir` (the risk-review skill's directory)
+- `skill_dir` (the risk-inspector skill's directory)
 - the spec or stated intent of the change, and the plan of action if there is one
 - the policy file path, or `none` (strict default: `templates/REVIEW-POLICY.md` in the skill)
 - on re-review rounds: the previous round's findings file

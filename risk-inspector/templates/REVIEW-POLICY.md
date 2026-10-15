@@ -1,6 +1,6 @@
 # Review policy
 
-<!-- Copy to the repo root as REVIEW-POLICY.md and fill in. The risk-review skill reads it on
+<!-- Copy to the repo root as REVIEW-POLICY.md and fill in. The risk-inspector skill reads it on
      every review. Where a section is missing or left as the example, the strict default applies.
      Keep it short: rules here are applied literally. -->
 

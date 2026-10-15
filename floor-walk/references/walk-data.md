@@ -44,6 +44,10 @@ The walk page (`templates/walk.html`) renders entirely from the JSON block with 
           "title": "One line, stated as the fact, not a question",
           "detail": "2-3 sentences: what, why it matters, what limits it" }
       ],
+      "caught": [                      // as-built only: risk-review findings fixed during the loop
+        { "title": "One line", "severity": "critical" | "high" | "medium" | "low",
+          "pass": "data" | "security" | "correctness" | "design" | "efficiency" | "readability" }
+      ],
       "diff": "unified diff text for this stop's files (as-built only; \"\" for blueprint)"
     }
   ]
@@ -52,6 +56,7 @@ The walk page (`templates/walk.html`) renders entirely from the JSON block with 
 
 ## Rules
 
+- **Risk-review findings** map to flags and `caught` entries by the table in the `risk-review` skill. Keep `caught` titles free of sensitive values, like everything else.
 - **Level follows category.** `deviation`, `security`, `blast-radius` and `unresolved` are always `red`. `debt` is always `yellow`. Never downgrade a red to keep the count low.
 - **Flag ids are stable.** On a re-publish, a flag whose substance didn't change keeps its id, so the reviewer's mark on it survives. A flag whose substance changed gets a new id (e.g. `s2-deviation-2`), so it must be marked again. Delete acks for removed flags.
 - **Stop ids are stable too** (comment threads anchor to stops).

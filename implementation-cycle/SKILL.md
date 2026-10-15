@@ -82,23 +82,13 @@ Implement the feature to meet its spec (the "why" and "what") and the approved b
 
 ### 5b — Independent review
 
-Once tests pass, spawn an independent subagent (via the Agent tool) with **fresh context** to review the feature. Give it:
-- the diff for this feature
-- this feature's plan of action and the relevant blueprint stops
-- the feature spec (from the plan file and its linked feature file, if any)
-
-Ask it to review for, explicitly:
-- **Clarity**: is the code readable and reasonably self-explanatory?
-- **Style**: does it match the repo's existing conventions?
-- **Security vulnerabilities**: think adversarially about edge cases and misuse.
-- **Functionality**: does it do what the feature requires, including edge cases?
-- **Performance**: any obvious inefficiencies or scaling concerns?
-- **Drift**: where does the implementation differ from the blueprint, and is each difference justified?
+Once tests pass, invoke the `risk-review` skill in **`cycle`** mode for this feature. Base is `HEAD`, because the feature is still uncommitted. Give it the feature spec (the plan file entry and its linked feature file, if any), this feature's plan of action, and the blueprint stops it touches. risk-review runs a fresh reviewer subagent and a fresh verifier subagent in the background, and returns the verified findings. Its findings files go in `.walks/<batch-id>/reviews/`.
 
 ### 5c — Converge
 
-- If the reviewer raises issues, fix them (back to 5a, adjusting targeted tests as needed), then re-review with a fresh subagent.
-- Allow **up to ~3 rounds**. If the review hasn't converged by then, **don't interrupt the user mid-batch**. Record each remaining issue in the build log as an `unresolved` item; each one becomes a red flag on the as-built walk.
+- Fix every open `critical`, `high` and `medium` finding. Go back to 5a for this, adding or adjusting targeted tests so each fix is pinned down. Fix `low` findings when cheap. Mark the rest `accepted`, with a one-line reason.
+- Re-run risk-review for the next round. It re-checks the previous findings and reviews the fixes.
+- Stop after **3 rounds**, or sooner when no open `critical/high/medium` findings remain. **Don't interrupt the user mid-batch.** Whatever is still open goes onto the as-built walk, mapped as risk-review's "Mapping to the floor walk" table describes. Resolved findings go into the walk's "caught in review" lists.
 
 ### 5d — Commit locally
 
@@ -120,7 +110,7 @@ The refreshed map is also the floor plan for the as-built walk.
 
 ## Step 8 — As-built walk (checkpoint 2)
 
-Invoke `floor-walk` in **`as-built`** mode against `<base>...HEAD`. Pass it the blueprint walk's data and URL, the build log (deviations, debt, unresolved review issues), and the test results. It publishes the walk, writes `.walks/<batch-id>/as-built.md`, and waits.
+Invoke `floor-walk` in **`as-built`** mode against `<base>...HEAD`. Pass it the blueprint walk's data and URL, the build log (deviations, debt), every feature's final risk-review findings from `.walks/<batch-id>/reviews/` (mapped to flags and "caught in review" lists as risk-review describes), and the test results. It publishes the walk, writes `.walks/<batch-id>/as-built.md`, and waits.
 
 When the review comes back:
 - **Changes requested** → for each "Change this" flag, make the change on the batch branch (re-running 5a-5c for the affected feature, and committing as a follow-up commit). Then re-publish the as-built walk on the same URL and wait again.

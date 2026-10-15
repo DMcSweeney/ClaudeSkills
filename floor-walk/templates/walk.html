@@ -137,6 +137,10 @@ a { color: var(--route); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .hint { font-size: 13px; color: var(--muted); }
 
+details.caught summary { cursor: pointer; font-size: 14px; color: var(--muted); }
+details.caught ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+details.caught li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; font-size: 14px; }
+.sev { font: 600 11px/1 var(--font-mono); text-transform: uppercase; color: var(--muted); min-width: 64px; }
 details.diff { border-top: 1px solid var(--rule); padding-top: 12px; }
 details.diff summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--muted); }
 details.diff summary .mono { color: var(--ink); }
@@ -200,6 +204,10 @@ details.diff summary .mono { color: var(--ink); }
       "flags": [
         { "id": "s1-blast", "level": "red", "category": "blast-radius", "title": "Charge calls without an order ID now fail", "detail": "Two internal scripts in tools/ call charge() directly without an order ID. They will start failing. Neither runs in production." }
       ],
+      "caught": [
+        { "title": "Customer email was included in the retry warning log line", "severity": "critical", "pass": "data" },
+        { "title": "Idempotency key built with MD5; switched to SHA-256", "severity": "medium", "pass": "security" }
+      ],
       "diff": "diff --git a/services/payments/charge.py b/services/payments/charge.py\n@@ -14,9 +14,17 @@ def charge(order, amount, attempt=0):\n-    return provider.charge(amount, customer=order.customer_id)\n+    if not order.id:\n+        raise MissingOrderId(\"charge() requires an order id\")\n+    key = idempotency_key(order.id, attempt)\n+    return provider.charge(\n+        amount,\n+        customer=order.customer_id,\n+        idempotency_key=key,\n+    )\n"
     },
     {
@@ -239,6 +247,10 @@ details.diff summary .mono { color: var(--ink); }
       ],
       "flags": [
         { "id": "s3-security", "level": "red", "category": "security", "title": "Outbound requests to merchant-supplied URLs", "detail": "Guarded against private IP ranges (SSRF) and capped at 5s timeouts. DNS rebinding is not handled: the IP is checked once, before connecting." }
+      ],
+      "caught": [
+        { "title": "Webhook secret compared with == (timing leak); now hmac.compare_digest", "severity": "high", "pass": "security" },
+        { "title": "Dispatcher opened a new HTTP session per event", "severity": "medium", "pass": "efficiency" }
       ],
       "diff": "diff --git a/services/webhooks/dispatch.py b/services/webhooks/dispatch.py\nnew file mode 100644\n@@ -0,0 +1,6 @@\n+def dispatch(event, merchant):\n+    url = merchant.webhook_url\n+    if resolves_to_private_ip(url):\n+        raise UnsafeWebhookUrl(url)\n+    body = sign(event, merchant.secret)\n+    return http.post(url, body, timeout=5)\n"
     },
@@ -414,6 +426,7 @@ flowchart LR
       (s.proof || []).length ? h("div", { class: "block" }, h("h3", {}, isBlueprint ? "How we'll know it works" : "Evidence it works"),
         h("ul", { class: "proof" }, s.proof.map(renderProof))) : null,
       (s.flags || []).length ? h("div", { class: "flags" }, s.flags.map((f) => renderFlag(f))) : null,
+      renderCaught(s),
       renderAsk(s, i),
       renderDiff(s));
     return el;
@@ -487,6 +500,15 @@ flowchart LR
       ta.focus();
     }
     return wrap;
+  }
+
+  function renderCaught(s) {
+    const c = s.caught || [];
+    if (!c.length) return null;
+    return h("details", { class: "caught" },
+      h("summary", {}, `Caught in review · ${c.length} fixed before you saw it`),
+      h("ul", {}, c.map((x) => h("li", {}, h("span", { class: "sev" }, x.severity || ""),
+        h("span", {}, x.title, x.pass ? h("span", { class: "hint" }, ` · ${x.pass}`) : null)))));
   }
 
   function renderDiff(s) {

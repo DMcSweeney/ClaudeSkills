@@ -72,13 +72,14 @@ Then, for each feature **in dependency order**:
 
 ### 5a — Implement against spec, with targeted tests
 
-Implement the feature to meet its spec (the "why" and "what") and the approved blueprint (the "how"). This is spec-driven, not strict TDD. Don't write a test for every code path up front, and don't aim for exhaustive coverage; that bloats the context window for little benefit.
-- Write tests for the **core logic**: the parts that carry real risk of being wrong (business logic, non-trivial branching, anything flagged as a security risk). Write them alongside or just ahead of the corresponding implementation.
-- Skip tests for trivial glue, straightforward wiring, or thin wrappers around well-tested libraries.
-- Match the repo's testing framework and conventions; default to `pytest` if there are none.
-- Run the test suite and confirm everything passes.
+Spawn a **fresh coding subagent** for the feature (Agent tool, `general-purpose`). It writes the code; this session orchestrates and keeps its own context clean for the rest of the batch. Its prompt:
 
-**Keep a running build log** for the as-built walk. For each feature, note every deviation from the blueprint and why, any debt or shortcuts, and anything you learned that changes the blast radius. Write these down as they happen; they're easy to lose by the end of the batch.
+> Read `<skills_dir>/coding-agent/SKILL.md` and follow it for all code you write. Implement feature `<id>` in `<repo>` on the checked-out branch `<batch branch>`. Don't commit, push, or switch branches.
+> Spec: `<the plan file entry and its linked feature file>`. Approved blueprint stops for this feature: `<stops>`. Plan of action: `<plan>`.
+> This is spec-driven, not strict TDD: write tests for the core logic (the parts with real risk of being wrong, and anything flagged as a security risk) alongside the code. Skip tests for trivial glue, straightforward wiring and thin wrappers. Match the repo's test framework (default `pytest`), and run the suite before you finish.
+> Finish with a report: files changed; tests added and the suite result; every deviation from the blueprint, with why; any `shortcut:` comments; new dependencies; anything that changes the blast radius; what you skipped or didn't check.
+
+Wait for its completion notification. **Keep a running build log** for the as-built walk, filled from each report: deviations, debt and shortcuts, blast-radius changes. Check that the suite really passes before moving on.
 
 ### 5b — Independent review
 
@@ -86,7 +87,7 @@ Once tests pass, invoke the `risk-inspector` skill in **`cycle`** mode for this 
 
 ### 5c — Converge
 
-- Fix every open `critical`, `high` and `medium` finding. Go back to 5a for this, adding or adjusting targeted tests so each fix is pinned down. Fix `low` findings when cheap. Mark the rest `accepted`, with a one-line reason.
+- Send the open findings back to **the same coding subagent** (SendMessage, so it keeps its context of the feature). It fixes every open `critical`, `high` and `medium` finding, adding or adjusting targeted tests so each fix is pinned down. It fixes `low` findings when cheap, and marks the rest `accepted` with a one-line reason. It reports back in the same format as 5a. If that subagent can no longer be reached, spawn a fresh one with the 5a prompt plus the findings.
 - Re-run risk-inspector for the next round. It re-checks the previous findings and reviews the fixes.
 - Stop after **3 rounds**, or sooner when no open `critical/high/medium` findings remain. **Don't interrupt the user mid-batch.** Whatever is still open goes onto the as-built walk, mapped as risk-inspector's "Mapping to the floor walk" table describes. Resolved findings go into the walk's "caught in review" lists.
 

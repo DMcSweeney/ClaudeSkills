@@ -200,17 +200,24 @@ Consider:
 
 Do not create artificial dependencies merely to force an order.
 
-## 12. Review the decomposition
+## 12. Draft the plan and feature specifications
 
-Before finalising, present:
+Before asking the user to review, produce full drafts — they may still change in Step 14:
 
-- the overall approach;
-- the proposed features;
-- feature dependencies;
-- important decisions;
-- remaining open questions.
+1. A short human-facing summary plan (`templates/plan.md`).
+2. One detailed specification per feature (`templates/feature.md`, see `references/feature-specification.md`).
+3. A decision log when consequential decisions were made.
 
-Allow the user to change scope, behaviour, feature boundaries, dependencies, architectural decisions, or acceptance criteria.
+Keep the human summary concise and put detailed technical context in the feature specifications. Do not duplicate feature detail into the summary plan — link to the feature files instead.
+
+For each feature, also work out what the blueprint floor walk (Step 14) needs — there's no need to write this out separately in chat, it feeds the walk directly:
+
+- **Approach**: how it will be implemented.
+- **Components and files** it's expected to touch, and any new components or connections.
+- **Design calls**: the real forks in the road from Step 8, with what was chosen and why.
+- **Planned tests**: the tests implied by the acceptance criteria.
+- **Security risks**: input validation, auth boundaries, data exposure, injection, dependencies. These become red `security` flags on the walk.
+- **Blast radius**: anything outside this feature that could behave differently. These become red `blast-radius` flags on the walk.
 
 ## 13. Planning quality gate
 
@@ -235,16 +242,22 @@ Verify:
 
 If an important item is unresolved, investigate further or ask the user.
 
-## 14. Final artefacts
+## 14. Blueprint floor walk
 
-Produce:
+**Full path only.** The lightweight path's single feature has no new decisions to walk through, so it skips straight to Step 15.
 
-1. A short human-facing summary plan.
-2. One detailed specification per feature.
-3. A decision log when consequential decisions were made.
+Invoke the `floor-walk` skill in **`blueprint`** mode over the whole plan: the drafted feature specs and their plan-of-action detail (Step 12), plus `ARCHITECTURE.md`. Use the `<feature-name>` slug as the walk's id/name. It publishes the walk, writes a record, gives the user the link, and waits — this is the one point in planning where the user reviews and gives feedback before anything is finalised.
 
-Keep the human summary concise and put detailed technical context in the feature specifications. Do not duplicate feature detail into the summary plan — link to the feature files instead.
+If the decomposition is large enough that the walk would run to many more than ~8 stops, say so when handing off the link — the user may prefer to split the plan — but don't withhold the review over it.
+
+When the review comes back:
+
+- **Approved** → continue to Step 15.
+- **Changes requested** → apply each "Change this" note — to a feature spec, the decision log, or the decomposition/dependencies itself if the note calls for it — redraft the affected artefacts (Step 12), re-publish the walk on the same URL, and wait again.
+- **The user rejects the decomposition outright** (in a note or in chat) → go back to Step 10 with their reasoning. Don't finalise a shape they've rejected.
+
+Answer any questions the user asks from the walk page in their comment threads (`floor-walk` covers how).
 
 ## 15. Save outputs
 
-Write the plan and feature files to `.plans/<feature-name>/` as described in `SKILL.md`. Tell the user where the plan was saved and that it is ready to hand off to the `implementation-cycle` skill.
+Write the plan and feature files to `.plans/<feature-name>/` as described in `SKILL.md`, including the blueprint walk's record and link. Record the walk's URL in `plan.md` (see its template) so `implementation-cycle` can carry it through to the as-built walk and the PR. Tell the user where the plan was saved and that it is ready to hand off to the `implementation-cycle` skill, already reviewed.

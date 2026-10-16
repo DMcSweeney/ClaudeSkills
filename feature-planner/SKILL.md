@@ -28,8 +28,9 @@ At a high level (full path):
 7. Resolve consequential decisions with the user.
 8. Decompose the agreed behaviour into independently implementable features.
 9. Establish dependencies and implementation order.
-10. Review the decomposition with the user.
-11. Produce the final summary plan and feature specifications.
+10. Draft the summary plan and feature specifications, including each feature's plan of action.
+11. Review the draft with the user via a blueprint floor walk; apply changes and re-walk until approved.
+12. Save the finalised outputs.
 
 ## Core principles
 
@@ -66,6 +67,7 @@ Write outputs into `.plans/<feature-name>/` in the repository:
 ```text
 .plans/<feature-name>/
 ├── plan.md
+├── blueprint.md         # the floor-walk record from Step 14 of the workflow
 └── features/
     ├── F001-<short-name>.md
     ├── F002-<short-name>.md
@@ -80,4 +82,4 @@ Repository orientation (workflow Step 3) is delegated to the `architecture-map` 
 
 ## Handing off to implementation
 
-This skill's output (`.plans/<feature-name>/plan.md` plus its `features/` files) is designed to be consumed by the `implementation-cycle` skill, which implements one feature at a time from a plan file. Once planning is finished, tell the user their plan is ready and point them at the `.plans/<feature-name>/plan.md` path so they can hand it to `implementation-cycle`.
+This skill's output (`.plans/<feature-name>/plan.md` plus its `features/` files) is designed to be consumed by the `implementation-cycle` skill, which implements features from a plan file in batches. The blueprint floor walk (workflow Step 14) is the one point where the user reviews the planned shape — `implementation-cycle` assumes it already happened and only asks the user to confirm which features go into each batch, not the implementation shape itself. Once planning is finished and the walk is approved, tell the user their plan is ready and point them at the `.plans/<feature-name>/plan.md` path so they can hand it to `implementation-cycle`.

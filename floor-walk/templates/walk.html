@@ -425,7 +425,7 @@ flowchart LR
           d.why ? h("span", {}, d.why) : null))) : null,
       (s.proof || []).length ? h("div", { class: "block" }, h("h3", {}, isBlueprint ? "How we'll know it works" : "Evidence it works"),
         h("ul", { class: "proof" }, s.proof.map(renderProof))) : null,
-      (s.flags || []).length ? h("div", { class: "flags" }, s.flags.map((f) => renderFlag(f))) : null,
+      (s.flags || []).length ? h("div", { class: "flags" }, s.flags.map((f) => renderFlag(f, s))) : null,
       renderCaught(s),
       renderAsk(s, i),
       renderDiff(s));
@@ -442,7 +442,7 @@ flowchart LR
     return h("li", {}, h("span", { class: `pill ${status}` }, status || "test"), h("span", {}, p.text));
   }
 
-  function renderFlag(f) {
+  function renderFlag(f, s) {
     const label = `${f.level === "red" ? "Red" : "Yellow"} · ${CATEGORY[f.category] || f.category}`;
     const card = h("div", { class: `flag ${f.level}`, id: `flag-${f.id}` },
       h("div", { class: "flag-top" }, h("span", { class: "flag-label" }, label),
@@ -456,9 +456,48 @@ flowchart LR
         ta.value = ack.note || "";
         ta.addEventListener("input", () => scheduleNote(f.id, ta.value));
         card.append(ta);
+        const sendRow = renderFlagSend(f, s, ta);
+        if (sendRow) card.append(sendRow);
       }
     }
     return card;
+  }
+
+  function renderFlagSend(f, s, ta) {
+    if (!state.comments) return null;
+    const msg = h("span", { class: "hint", role: "status" });
+    const btn = h("button", {
+      type: "button", class: "btn", disabled: !state.canWrite || state.review,
+      onclick: async () => {
+        const text = ta.value.trim();
+        if (!text) { msg.textContent = "Type what should change first."; return; }
+        btn.disabled = true; msg.textContent = "Sending…";
+        clearTimeout(noteTimers[f.id]);
+        const prev = state.acks[f.id] || {};
+        const next = { ...prev, verdict: "change", note: text, by: state.uid, at: new Date().toISOString() };
+        state.acks[f.id] = next;
+        try {
+          await enqueue(f.id, () => state.db.collection("acks").doc(f.id).set(next));
+        } catch (e) { /* still try to notify; the note is in memory either way */ }
+        if (state.canSend) {
+          try {
+            const el = document.getElementById(`flag-${f.id}`);
+            const anchor = await state.comments.anchorFor(el);
+            await state.comments.sendToClaude({
+              anchor,
+              text: `Requesting a change on a ${f.level} ${CATEGORY[f.category] || f.category} flag, stop "${s.title}": "${f.title}".\n\n${text}`
+            });
+            msg.textContent = "Sent. Claude will reply in the comment thread on this flag.";
+          } catch (e) {
+            msg.textContent = e && e.code === "consent_required" ? "Saved, but not sent: commenting from this page needs your permission." : "Saved, but not sent. Your note is still here; try again in a moment.";
+          }
+        } else {
+          msg.textContent = "Saved.";
+        }
+        btn.disabled = false;
+      }
+    }, "Send to Claude");
+    return h("div", { style: "display:flex;gap:12px;align-items:center;flex-wrap:wrap" }, btn, msg);
   }
 
   function verdictControl(f) {
@@ -626,8 +665,12 @@ flowchart LR
     noteTimers[flagId] = setTimeout(() => {
       const ack = state.acks[flagId];
       if (!ack || ack.note === text) return;
-      ack.note = text;
-      enqueue(flagId, () => state.db.collection("acks").doc(flagId).set({ ...ack })).catch(() => {});
+      // Bump `at` on every edit, not just on verdict changes — otherwise a snapshot
+      // that still reflects the pre-edit note can look no older than this edit to the
+      // merge check below, and silently overwrite it in state.acks.
+      const next = { ...ack, note: text, at: new Date().toISOString() };
+      state.acks[flagId] = next;
+      enqueue(flagId, () => state.db.collection("acks").doc(flagId).set(next)).catch(() => {});
     }, 700);
   }
 
@@ -637,7 +680,7 @@ flowchart LR
       if (!old) continue;
       const focusedNote = document.activeElement && document.activeElement.id === `note-${f.id}`;
       if (focusedNote) continue; // never yank a textarea out from under the reviewer
-      old.replaceWith(renderFlag(f));
+      old.replaceWith(renderFlag(f, f.stop));
     }
   }
 

@@ -1,5 +1,9 @@
 # Implementation Plan
 
+## Review
+
+Blueprint walk: <url, once reviewed — blank until Step 14 of the workflow completes>
+
 ## Goal
 
 <What are we trying to achieve, and why?>

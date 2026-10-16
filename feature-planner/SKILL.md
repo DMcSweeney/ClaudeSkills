@@ -21,10 +21,10 @@ First, triage: if the request is a single-file/localized change with no new user
 At a high level (full path):
 
 1. Understand the user's high-level intent.
-2. Ask focused product and behavioural questions before investigating implementation details.
+2. Grill the user on product and behavioural intent before investigating implementation details, scaling the amount of questioning to the request's complexity.
 3. Explore the repository progressively.
 4. Identify existing behaviour, analogous implementations, architecture, and testing conventions.
-5. Ask detailed technical questions arising from the codebase.
+5. Grill the user on detailed technical questions arising from the codebase.
 6. Propose meaningful technical alternatives with concise trade-offs.
 7. Resolve consequential decisions with the user.
 8. Decompose the agreed behaviour into independently implementable features.
@@ -46,7 +46,7 @@ At a high level (full path):
 - Assume each feature may be handed to an independent implementation agent.
 - Make dependencies explicit.
 - Do not invent requirements or silently resolve consequential ambiguity.
-- Keep questioning interactive and manageable.
+- Keep questioning interactive, and scale its intensity to the task's complexity — see `references/grilling.md`.
 - Do not finalise while important behavioural or architectural decisions remain unresolved.
 
 ## Final outputs
@@ -58,6 +58,8 @@ Use `templates/feature.md` for each independent feature specification.
 Read `references/feature-specification.md` before producing feature specifications.
 
 Read `references/planning-principles.md` when evaluating requirements, architectural choices, feature boundaries, or acceptance criteria.
+
+Read `references/grilling.md` before running workflow Steps 2 and 8 — it defines the design-tree questioning method used for both clarification rounds and how its intensity scales with the complexity of the request, from a near-silent fact-check of an existing plan up to an extensive back-and-forth for a brand-new feature.
 
 Each feature specification must be sufficiently self-contained for an independent implementation agent to implement and test it without needing the planning conversation. `plan.md` is an index into the feature files, not a substitute for them — do not duplicate feature detail into `plan.md`.
 

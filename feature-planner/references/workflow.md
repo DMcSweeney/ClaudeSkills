@@ -10,9 +10,11 @@ Use the **full path** (Steps 1–15) for anything else, including any request wh
 
 When uncertain, use the full path — it's cheaper to over-invest on a simple request than to under-investigate a genuinely consequential one.
 
+This triage is the coarse version of a judgment that Steps 2 and 8 make continuously: see `references/grilling.md` for how questioning intensity scales with how well-defined the request already is, including the plan-sourced case below.
+
 ### Lightweight path
 
-1. Confirm the specific desired behaviour if it isn't already fully explicit — one focused question at most, only if truly needed.
+1. Confirm the specific desired behaviour if it isn't already fully explicit — one focused question at most, only if truly needed. If the request already points at an existing written plan or spec (a file path, not a fresh description), don't ask about it — use `references/grilling.md`'s plan-sourced approach instead: investigate the plan's claims against the codebase in full, then present every divergence found as one batched list, and only raise the genuine forks that surfaces as frontier questions.
 2. Locate the relevant code directly; skip repository orientation via `architecture-map`. If `ARCHITECTURE.md` already exists, a quick read of it is fine and cheap — just don't generate or refresh it for a lightweight-path request.
 3. Check for one obviously analogous existing pattern to follow, if any.
 4. Produce a single feature specification using `templates/feature.md` (see `references/feature-specification.md`), still with real acceptance criteria — the process is shorter, not the quality bar.
@@ -38,9 +40,9 @@ Separate explicit requirements from anything inferred.
 
 ## 2. High-level clarification
 
-Before substantial repository investigation, ask questions about product and behavioural intent.
+Before substantial repository investigation, interview the user about product and behavioural intent using the grilling method in `references/grilling.md` — read it before running this step.
 
-Prioritise:
+Seed the design tree's top layer from:
 
 - desired behaviour;
 - motivation and outcome;
@@ -52,11 +54,9 @@ Prioritise:
 - what must remain unchanged;
 - what is explicitly out of scope.
 
-Do not ask implementation questions that repository investigation can answer.
+Do not ask implementation questions that repository investigation can answer — those belong to Step 8's layer of the tree, once investigation has produced facts to ground them.
 
-Ask a manageable batch of high-value questions rather than presenting a large questionnaire.
-
-Continue questioning until there is enough understanding of the desired behaviour to investigate the repository intelligently.
+Run rounds until this layer's frontier is empty: enough shared understanding of desired behaviour to investigate the repository intelligently, with nothing left silently assumed. How many rounds that takes should track the request's complexity (see `references/grilling.md`), not a fixed question budget.
 
 ## 3. Repository orientation
 
@@ -141,17 +141,17 @@ Do not perform broad historical investigation without a specific reason.
 
 ## 8. Technical clarification
 
-After investigating the codebase, ask detailed technical questions that cannot reasonably be answered by inspection.
+After investigating the codebase, continue the grilling method from `references/grilling.md` over the technical layer of the design tree that investigation exposed — decisions that could not be settled by inspection alone.
 
-For consequential decisions:
+For each frontier question:
 
 1. Explain what the codebase currently does.
 2. Explain why the decision matters.
 3. Present meaningful alternatives.
-4. Give a recommendation where appropriate.
+4. Give a recommendation where appropriate, worded so "yes" accepts it.
 5. Let the user make the consequential decision.
 
-Do not make consequential product or architectural decisions silently.
+Do not make consequential product or architectural decisions silently. Run rounds until this layer's frontier is empty — see `references/grilling.md` for how the number of rounds should scale with the request's complexity.
 
 ## 9. Build a shared model
 

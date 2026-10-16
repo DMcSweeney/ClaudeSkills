@@ -31,9 +31,9 @@ Author and reviewer are always separate contexts. Never review code in the same 
    - Policy: `REVIEW-POLICY.md` at the repo root, else `none`.
    - Findings directory: `.walks/<batch-id>/reviews/` in cycle mode, the scratchpad in standalone mode.
    - Gather the spec and the plan of action (cycle), or the stated intent (PR description, commit messages; standalone).
-2. **Reviewer.** Spawn a fresh `general-purpose` subagent (Agent tool), and wait for its completion notification. Its prompt:
+2. **Reviewer.** Spawn a fresh `general-purpose` subagent (Agent tool, `model: "sonnet"`), and wait for its completion notification. Its prompt:
    > Read `<skill_dir>/references/reviewer-brief.md` and follow it exactly; it references `checklists.md` and `scripts/run_gates.py` in the same skill. Inputs: repo=`…`, base=`…`, out=`<dir>/<feature-or-branch>-r<n>.reviewer.json`, skill_dir=`…`, policy=`…`, round=`n`, previous=`<path or none>`. Spec / stated intent: `…`. Plan of action: `…`.
-3. **Verifier.** Spawn a second fresh `general-purpose` subagent:
+3. **Verifier.** Spawn a second fresh `general-purpose` subagent (Agent tool, `model: "opus"`) — the verifier's job is adversarial (disprove or confirm each finding), which benefits more from a stronger model than the reviewer's checklist sweep:
    > Read `<skill_dir>/references/verifier-brief.md` and follow it exactly. Inputs: repo, base, findings=`<the reviewer's out>`, out=`<dir>/<feature-or-branch>-r<n>.json`, skill_dir.
 4. **Merge.**
    - Drop `refuted` findings, but keep them in the file for the record.

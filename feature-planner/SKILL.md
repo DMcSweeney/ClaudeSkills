@@ -1,6 +1,7 @@
 ---
 name: feature-planner
 description: This skill should be used when the user asks to plan, scope, decompose, or design a software feature or implementation; turn a broad feature request into an ATDD-oriented implementation plan; investigate an existing codebase before planning a change; define acceptance criteria; or prepare independent feature specifications for implementation agents. Use it whenever a software change needs collaborative requirements clarification, codebase investigation, architectural trade-offs, or dependency-aware feature decomposition.
+model: opus
 ---
 
 # Feature Planner

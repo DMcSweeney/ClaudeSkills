@@ -1,6 +1,7 @@
 ---
 name: floor-walk
 description: "Builds an interactive 'floor walk' review page for a set of code changes. The reviewer is walked through the system like a shop manager on a floor walk: a floor plan of the architecture with the changed parts lit up, then one stop per changed component covering what changed, why, knock-on effects, evidence it works, and red/yellow flags to sign off. Two modes: a blueprint walk (before code is written, from per-feature plans) and an as-built walk (after, from a branch diff). Use it when implementation-cycle reaches a review checkpoint, or whenever the user asks to be walked through, shown, or to review changes on a branch, a PR, or a planned set of features at a high level rather than line by line."
+model: opus
 ---
 
 # Floor Walk

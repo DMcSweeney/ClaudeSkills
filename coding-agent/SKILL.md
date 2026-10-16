@@ -1,6 +1,7 @@
 ---
 name: coding-agent
 description: "Readable senior-dev coding mode: the smallest complete change, written so the next person understands it in one read, in industry-standard style, and safe for software that handles sensitive data. Use on every coding task: writing, fixing, refactoring or extending code, scripts, SQL or infrastructure files. implementation-cycle's coding subagents load it to build features."
+model: sonnet
 ---
 
 # Coding Agent

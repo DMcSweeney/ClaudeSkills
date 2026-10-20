@@ -10,32 +10,58 @@ generated_at_commit: <git HEAD hash at generation time, if applicable, else omit
 >
 > Domains with substantial detail are split into `.architecture/domains/<domain>.md` — follow the link in the table below rather than expecting everything inline here.
 
+## Domain map
+
+```mermaid
+flowchart LR
+    web_app[Web app] -->|HTTP| api[API]
+    api -->|jobs| jobs[Background jobs]
+    api --> data[(Data)]
+    jobs --> data
+    classDef blue fill:#E4ECF7,stroke:#3F6497;
+    classDef green fill:#E5F0E0,stroke:#4E7A40;
+    classDef amber fill:#F6ECD6,stroke:#8F6A16;
+    classDef slate fill:#E7E9EE,stroke:#525A6B;
+    class web_app blue;
+    class api green;
+    class jobs amber;
+    class data slate;
+```
+
+<Replace with one node per domain (roughly 4-10). Node ids are the domain ids from the Domains table and the colour classes are the domains' colours. This diagram is canonical: floor walks copy it verbatim, so keep ids, order and colours stable across refreshes (see the skill's "Canonical maps" rules).>
+
 ## Structure overview
 
 ```mermaid
-graph TD
-    subgraph Frontend
-        WEB[web app]
+flowchart LR
+    subgraph web_app[Web app]
+        web[web client]
     end
-    subgraph Backend
-        API[api service]
-        WORKER[worker service]
+    subgraph api[API]
+        http[http handlers]
+        auth[auth]
     end
-    DB[(database)]
+    subgraph jobs[Background jobs]
+        worker[worker]
+    end
+    subgraph data[Data]
+        db[(database)]
+    end
 
-    WEB --> API
-    API --> WORKER
-    API --> DB
-    WORKER --> DB
+    web --> http
+    http --> auth
+    http --> worker
+    http --> db
+    worker --> db
 ```
 
-<Replace with the actual domain/service-level boundaries and dependencies. Keep nodes at domain/service granularity, not individual files or classes — this diagram is meant to stay readable at a glance (roughly 10-20 nodes), not enumerate everything.>
+<Replace with the actual components, one subgraph per domain whose id is the domain id. Keep nodes at component/service granularity, not individual files or classes (roughly 10-20 nodes). Node ids are short snake_case and stable: floor walks reuse them to draw the detail map.>
 
 ## Domains
 
-| Domain | Path | Description | Details |
-|---|---|---|---|
-| `<domain>` | `<path>` | <one-line description> | <link to `.architecture/domains/<slug>.md`, or "—" if not split out> |
+| Domain | Id | Colour | Path | Description | Details |
+|---|---|---|---|---|---|
+| <plain name> | `<domain_id>` | <colour from the palette> | `<path>` | <one-line description> | <link to `.architecture/domains/<slug>.md`, or "—" if not split out> |
 
 ## Apps / packages
 

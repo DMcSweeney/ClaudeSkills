@@ -3,6 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <style>
+/* Layout: one reading column. Purpose and features, then the fixed system map, every issue in one list, the detail map, then one card per stop. */
 :root {
   --ground: #F3F5F1;
   --surface: #FFFFFF;
@@ -19,6 +20,16 @@
   --ok-soft: #DDF0E3;
   --add: #E3F3E6;
   --del: #F8E4E1;
+  /* change type on the maps: modified = teal, new = purple, removed = red */
+  --mod: #0F7B74; --mod-soft: #D3ECE8;
+  --new: #6B45B8; --new-soft: #E9E1F8;
+  /* domain tints, named as in ARCHITECTURE.md */
+  --blue-fill: #E4ECF7; --blue-line: #3F6497;
+  --green-fill: #E5F0E0; --green-line: #4E7A40;
+  --amber-fill: #F6ECD6; --amber-line: #8F6A16;
+  --rose-fill: #F5E3E8; --rose-line: #8E4B65;
+  --slate-fill: #E7E9EE; --slate-line: #525A6B;
+  --sand-fill: #EFE7DC; --sand-line: #76603F;
   --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -30,6 +41,10 @@
     --route: #4CC0B4; --route-soft: #173532;
     --red: #F07A6E; --red-soft: #3A1E1B; --yellow: #E2B54A; --yellow-soft: #352C14;
     --ok: #63C68D; --ok-soft: #173123; --add: #16301E; --del: #3A1F1C;
+    --mod: #4CC0B4; --mod-soft: #173532; --new: #B49BF0; --new-soft: #2C2443;
+    --blue-fill: #1D2734; --blue-line: #93B5E3; --green-fill: #1E2A1E; --green-line: #96C487;
+    --amber-fill: #2F281A; --amber-line: #E0B865; --rose-fill: #32232A; --rose-line: #E0A2B9;
+    --slate-fill: #23272D; --slate-line: #AEB5C4; --sand-fill: #2D2822; --sand-line: #D0B892;
   }
 }
 :root[data-theme="dark"] {
@@ -38,11 +53,17 @@
   --route: #4CC0B4; --route-soft: #173532;
   --red: #F07A6E; --red-soft: #3A1E1B; --yellow: #E2B54A; --yellow-soft: #352C14;
   --ok: #63C68D; --ok-soft: #173123; --add: #16301E; --del: #3A1F1C;
+  --mod: #4CC0B4; --mod-soft: #173532; --new: #B49BF0; --new-soft: #2C2443;
+  --blue-fill: #1D2734; --blue-line: #93B5E3; --green-fill: #1E2A1E; --green-line: #96C487;
+  --amber-fill: #2F281A; --amber-line: #E0B865; --rose-fill: #32232A; --rose-line: #E0A2B9;
+  --slate-fill: #23272D; --slate-line: #AEB5C4; --sand-fill: #2D2822; --sand-line: #D0B892;
 }
 
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body { background: var(--ground); color: var(--ink); font: 15px/1.6 var(--font-body); }
 .wrap { max-width: 880px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 140px; display: grid; gap: 40px; }
+.wrap > * { min-width: 0; }
 h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.15; }
 h1 { font-size: clamp(26px, 4.4vw, 38px); font-weight: 750; font-stretch: 85%; letter-spacing: -0.01em; }
 h2 { font-size: 22px; font-weight: 700; font-stretch: 88%; }
@@ -55,55 +76,99 @@ a { color: var(--route); }
 .eyebrow { font: 600 12px/1 var(--font-body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--route); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .example-tag { background: var(--yellow-soft); color: var(--yellow); padding: 3px 7px; border-radius: 4px; letter-spacing: 0.06em; }
 .masthead { display: grid; gap: 14px; }
-.lede { color: var(--muted); font-size: 16px; }
-.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 13px; }
-.meta b { color: var(--ink); font-weight: 500; }
+.purpose { font-size: 17px; line-height: 1.55; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted); font-size: 12px; }
+.idref { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); font-weight: 400; }
 
-.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.section { display: grid; gap: 12px; }
+.section-head { display: grid; gap: 4px; }
 .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; align-content: start; }
-.features { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.features li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline; }
-.fid { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-.counts { display: flex; gap: 18px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
-.count { display: grid; gap: 2px; }
-.count strong { font: 700 28px/1 var(--font-display); font-stretch: 85%; }
-.count span { font-size: 12px; color: var(--muted); }
-.count.red strong { color: var(--red); }
-.count.yellow strong { color: var(--yellow); }
+.features { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.features li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline; }
+.features li > div { min-width: 0; }
 
 .pill { font: 600 11px/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; white-space: nowrap; background: var(--route-soft); color: var(--route); }
 .pill.deviated, .pill.removed, .pill.fail { background: var(--red-soft); color: var(--red); }
 .pill.dropped, .pill.planned { background: var(--yellow-soft); color: var(--yellow); }
 .pill.built, .pill.pass { background: var(--ok-soft); color: var(--ok); }
+.pill.new { background: var(--new-soft); color: var(--new); }
+.pill.todo { background: transparent; color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
 
 .banner { border-radius: 10px; padding: 12px 16px; font-weight: 500; }
 .banner.approved { background: var(--ok-soft); color: var(--ok); }
 .banner.changes { background: var(--red-soft); color: var(--red); }
 
-.floorplan { display: grid; gap: 12px; }
-.floorplan figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; overflow-x: auto; }
-.floorplan pre.mermaid { margin: 0; background: transparent; text-align: center; }
-.floorplan figcaption { color: var(--muted); font-size: 13px; padding-top: 10px; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--muted); }
-.legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--route); vertical-align: middle; margin-right: 6px; }
-.legend i.dash { border-top-style: dashed; }
+/* ---------- maps ---------- */
+.dom-blue { --c-fill: var(--blue-fill); --c-line: var(--blue-line); }
+.dom-green { --c-fill: var(--green-fill); --c-line: var(--green-line); }
+.dom-amber { --c-fill: var(--amber-fill); --c-line: var(--amber-line); }
+.dom-rose { --c-fill: var(--rose-fill); --c-line: var(--rose-line); }
+.dom-slate { --c-fill: var(--slate-fill); --c-line: var(--slate-line); }
+.dom-sand { --c-fill: var(--sand-fill); --c-line: var(--sand-line); }
 
-.route { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: none; }
-.route li a { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
-.route li a:hover { background: var(--surface); }
-.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.map { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 10px; scroll-margin-top: 16px; }
+.map .scroll { overflow-x: auto; }
+.map pre.mermaid { margin: 0; background: transparent; text-align: center; }
+.map figcaption { color: var(--muted); font-size: 13px; }
+.map svg g.node { --n-fill: var(--surface); --n-stroke: var(--muted); --n-width: 1.5px; --n-dash: none; }
+.map svg g.node :is(rect, polygon, circle, ellipse, path) { fill: var(--n-fill) !important; stroke: var(--n-stroke) !important; stroke-width: var(--n-width) !important; stroke-dasharray: var(--n-dash) !important; }
+.map svg g.node.modified { --n-fill: var(--mod-soft); --n-stroke: var(--mod); --n-width: 3px; }
+.map svg g.node.added { --n-fill: var(--new-soft); --n-stroke: var(--new); --n-width: 3px; --n-dash: 6 4; }
+.map svg g.node.removed { --n-fill: var(--red-soft); --n-stroke: var(--red); --n-width: 2.5px; --n-dash: 2 3; }
+.map svg g.node[class*="dom-"] { --n-fill: var(--c-fill); --n-stroke: var(--c-line); }
+.map svg g.node.chg-modified { --n-stroke: var(--ink); --n-width: 3px; }
+.map svg g.node.chg-new { --n-stroke: var(--new); --n-width: 3px; --n-dash: 6 4; }
+.map svg g.node.chg-removed { --n-stroke: var(--red); --n-width: 2.5px; --n-dash: 2 3; }
+.map svg g.cluster > rect { fill: var(--c-fill, var(--ground)) !important; stroke: var(--c-line, var(--muted)) !important; stroke-width: 1.5px !important; }
+.map svg .nodeLabel, .map svg .cluster-label, .map svg .edgeLabel, .map svg span { color: var(--ink) !important; }
+.map svg text { fill: var(--ink) !important; }
+.map svg .edgeLabel, .map svg .edgeLabel p, .map svg .labelBkg { background: var(--surface) !important; }
+.map svg .edgeLabel rect { fill: var(--surface) !important; }
+.map svg .flowchart-link { stroke: var(--muted) !important; }
+.map svg marker path { fill: var(--muted) !important; stroke: var(--muted) !important; }
+.map svg g.node.jump { cursor: pointer; }
+.map svg g.node.jump:hover, .map svg g.node.jump:focus-visible { --n-width: 4px; outline: none; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 16px; height: 12px; border-radius: 3px; display: inline-block; background: var(--c-fill, var(--surface)); border: 1.5px solid var(--c-line, var(--muted)); }
+.sw.modified { background: var(--mod-soft); border: 2.5px solid var(--mod); }
+.sw.added { background: var(--new-soft); border: 2.5px dashed var(--new); }
+.sw.removed { background: var(--red-soft); border: 2px dotted var(--red); }
+.sw.touched { background: transparent; border: 2.5px solid var(--ink); }
+.sw.newdom { background: transparent; border: 2.5px dashed var(--new); }
+.chip { font: 600 12px/1 var(--font-body); padding: 4px 8px; border-radius: 4px; background: var(--c-fill, var(--ground)); border: 1px solid var(--c-line, var(--rule)); color: var(--ink); white-space: nowrap; }
+
+/* ---------- issues ---------- */
+.issue-group { display: grid; gap: 8px; }
+.issues { list-style: none; margin: 0; padding: 0; display: grid; }
+.issue { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline; padding: 10px 2px; border-bottom: 1px solid var(--rule); }
+.issue:last-child { border-bottom: 0; }
+.issue > div { min-width: 0; display: grid; gap: 2px; }
+.issue-title { color: var(--ink); font-weight: 600; text-decoration: none; }
+.issue-title:hover { text-decoration: underline; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot.red { background: var(--red); } .dot.yellow { background: var(--yellow); }
 .dots { display: flex; gap: 4px; }
+
+/* ---------- route + stops ---------- */
+.route { list-style: none; margin: 0; padding: 0; display: grid; }
+.route li a { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
+.route li a:hover { background: var(--ground); }
+.route li a > span { min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
 .num { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--route); color: var(--route); display: grid; place-items: center; font: 700 14px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 
 .stops { display: grid; gap: 28px; }
 .stop { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 22px; display: grid; gap: 18px; scroll-margin-top: 16px; }
+.stop:focus { outline: none; }
 .stop-head { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; }
 .stop-head .num { width: 38px; height: 38px; font-size: 17px; background: var(--route); color: var(--surface); border: 0; }
-.stop-title { display: grid; gap: 6px; }
+.stop-title { display: grid; gap: 6px; min-width: 0; }
+.crumb { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.crumb .back { margin-left: auto; font-size: 13px; }
 .stop-sub { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; }
 .twocol { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
-.block { display: grid; gap: 8px; }
+.block { display: grid; gap: 8px; min-width: 0; }
 .block ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
 .decision { border-left: 3px solid var(--rule); padding-left: 12px; display: grid; gap: 2px; }
 .decision .alt { color: var(--muted); font-size: 13px; }
@@ -114,7 +179,7 @@ a { color: var(--route); }
 .ba dd { margin: 0; }
 
 .flags { display: grid; gap: 10px; }
-.flag { border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; background: var(--yellow-soft); }
+.flag { border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; background: var(--yellow-soft); scroll-margin-top: 16px; }
 .flag.red { background: var(--red-soft); }
 .flag-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
 .flag-label { font: 700 11px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow); }
@@ -137,14 +202,13 @@ a { color: var(--route); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .hint { font-size: 13px; color: var(--muted); }
 
-details.caught summary { cursor: pointer; font-size: 14px; color: var(--muted); }
-details.caught ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
-details.caught li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; font-size: 14px; }
+details.reviewer { border-top: 1px solid var(--rule); padding-top: 12px; color: var(--muted); }
+details.reviewer summary { cursor: pointer; font-size: 13px; }
+details.reviewer[open] { display: grid; gap: 12px; }
+.caught { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.caught li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; font-size: 14px; }
 .sev { font: 600 11px/1 var(--font-mono); text-transform: uppercase; color: var(--muted); min-width: 64px; }
-details.diff { border-top: 1px solid var(--rule); padding-top: 12px; }
-details.diff summary { cursor: pointer; font-weight: 500; font-size: 14px; color: var(--muted); }
-details.diff summary .mono { color: var(--ink); }
-.diff-body { margin-top: 10px; overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; }
+.diff-body { margin-top: 8px; overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; color: var(--ink); }
 .diff-body pre { margin: 0; font: 12.5px/1.5 var(--font-mono); padding: 10px 0; min-width: max-content; }
 .diff-body pre span { display: block; padding: 0 12px; white-space: pre; }
 .diff-body .a { background: var(--add); }
@@ -159,7 +223,7 @@ details.diff summary .mono { color: var(--ink); }
 .track div { height: 100%; background: var(--route); width: 0; transition: width 200ms ease; }
 .confirm { display: grid; gap: 10px; width: 100%; }
 @media (prefers-reduced-motion: reduce) { .track div { transition: none; } html { scroll-behavior: auto; } }
-@media (max-width: 520px) { .stop { padding: 16px; } .wrap { padding-inline: 16px; } }
+@media (max-width: 520px) { .stop { padding: 16px; } .wrap { padding-inline: 16px; } .crumb .back { margin-left: 0; } }
 </style>
 
 <!-- WALK DATA: the floor-walk skill replaces this JSON. Schema: references/walk-data.md -->
@@ -168,23 +232,33 @@ details.diff summary .mono { color: var(--ink); }
   "example": true,
   "kind": "as-built",
   "batch": { "id": "B02", "name": "Checkout reliability" },
-  "headline": "Payments now retry safely and tell merchants when an order settles",
+  "headline": "Customers are never charged twice, and merchants hear the moment money settles",
+  "purpose": "A payment that timed out and was retried could charge a customer twice. This batch makes retries safe and adds a way to tell merchants as soon as a payment settles, so they no longer have to keep checking.",
   "repo": "acme/shop",
   "branch": "batch/b02-checkout-reliability",
   "base": "main",
   "generated_at": "2026-10-15",
   "blueprint_url": "",
   "features": [
-    { "id": "F004", "name": "Idempotent payment retries", "status": "built" },
-    { "id": "F005", "name": "Order-settled webhooks", "status": "deviated" },
+    { "id": "F004", "name": "Safe payment retries", "status": "built" },
+    { "id": "F005", "name": "Tell merchants when an order settles", "status": "deviated" },
     { "id": "F006", "name": "Retry dashboard metric", "status": "dropped", "note": "Moved to the next batch; needs the metrics service upgrade first." }
   ],
-  "floorplan_caption": "Payments is the only existing service that changes. Two new pieces hang off it: an event on the bus and a webhook dispatcher.",
+  "domains": [
+    { "id": "storefront", "name": "Storefront", "colour": "blue", "change": "untouched" },
+    { "id": "orders", "name": "Orders", "colour": "green", "change": "untouched" },
+    { "id": "payments", "name": "Payments", "colour": "amber", "change": "modified" },
+    { "id": "platform", "name": "Platform", "colour": "slate", "change": "modified" },
+    { "id": "integrations", "name": "Merchant integrations", "colour": "rose", "change": "new" }
+  ],
+  "floorplan_caption": "Payments is the only existing domain whose behaviour changes. A new Merchant integrations domain hangs off the event bus.",
   "stops": [
     {
       "id": "s1",
       "title": "Payments service",
       "component": "services/payments",
+      "domain": "payments",
+      "node": "pay",
       "change": "modified",
       "features": ["F004"],
       "what": "Charge requests now carry an idempotency key derived from the order ID and attempt number. Retries reuse the key, so the provider never charges twice.",
@@ -212,11 +286,13 @@ details.diff summary .mono { color: var(--ink); }
     },
     {
       "id": "s2",
-      "title": "Event bus: payment.settled",
+      "title": "Settlement event",
       "component": "services/payments/events.py",
+      "domain": "platform",
+      "node": "settled",
       "change": "new",
       "features": ["F005"],
-      "what": "Payments publishes a payment.settled event when the provider confirms a charge.",
+      "what": "Payments publishes a payment.settled event on the event bus when the provider confirms a charge.",
       "why": "Webhooks need a trigger that fires once per settled payment, not once per attempt.",
       "ripple": ["Any future consumer can subscribe to settlements without touching Payments."],
       "decisions": [],
@@ -233,6 +309,8 @@ details.diff summary .mono { color: var(--ink); }
       "id": "s3",
       "title": "Webhook dispatcher",
       "component": "services/webhooks",
+      "domain": "integrations",
+      "node": "hooks",
       "change": "new",
       "features": ["F005"],
       "what": "A new worker listens for payment.settled and POSTs a signed payload to each merchant's registered URL.",
@@ -246,7 +324,8 @@ details.diff summary .mono { color: var(--ink); }
         { "type": "test", "text": "Merchant URLs pointing at private IP ranges are refused", "status": "pass" }
       ],
       "flags": [
-        { "id": "s3-security", "level": "red", "category": "security", "title": "Outbound requests to merchant-supplied URLs", "detail": "Guarded against private IP ranges (SSRF) and capped at 5s timeouts. DNS rebinding is not handled: the IP is checked once, before connecting." }
+        { "id": "s3-security", "level": "red", "category": "security", "title": "Outbound requests to merchant-supplied URLs", "detail": "Guarded against private IP ranges (SSRF) and capped at 5s timeouts. DNS rebinding is not handled: the IP is checked once, before connecting." },
+        { "id": "s3-debt", "level": "yellow", "category": "debt", "title": "Merchant settings are loaded from the database once per event", "detail": "Each event reads the merchant's URL and secret again. Cheap at today's volume; a short cache would cut most of these reads at scale." }
       ],
       "caught": [
         { "title": "Webhook secret compared with == (timing leak); now hmac.compare_digest", "severity": "high", "pass": "security" },
@@ -258,6 +337,8 @@ details.diff summary .mono { color: var(--ink); }
       "id": "s4",
       "title": "Housekeeping",
       "component": "config, docs, tests/fixtures",
+      "domain": "",
+      "node": "",
       "change": "modified",
       "features": ["F004", "F005"],
       "what": "New settings for webhook timeouts, a fixtures update and the ARCHITECTURE.md refresh.",
@@ -274,35 +355,98 @@ details.diff summary .mono { color: var(--ink); }
 
 <main class="wrap">
   <header class="masthead" id="masthead"></header>
-  <section class="summary" id="summary" aria-label="Batch summary"></section>
+  <section class="panel" id="features" aria-label="Features in this batch"></section>
   <div id="review-banner" hidden></div>
 
-  <section class="floorplan" aria-labelledby="fp-h">
-    <h2 id="fp-h">Floor plan</h2>
-    <figure data-comment-target>
-<!-- FLOOR PLAN: the floor-walk skill replaces this mermaid block. -->
+  <section class="section" aria-labelledby="sys-h">
+    <div class="section-head">
+      <h2 id="sys-h">System map</h2>
+      <p class="hint">The same map on every walk. Outlined domains are the ones this batch touches.</p>
+    </div>
+    <figure class="map" id="system-map" data-comment-target>
+      <div class="scroll">
+<!-- SYSTEM MAP: the floor-walk skill replaces this mermaid block with the Domain map from ARCHITECTURE.md, verbatim. -->
 <pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "17px"}, "flowchart": {"padding": 12}}}%%
 flowchart LR
-  web[Storefront web] -->|POST /orders| api[Orders API]
-  api -->|charge| pay["1 · Payments service"]
-  api --> odb[(Orders DB)]
-  pay -->|charges| psp[(Payment provider)]
-  pay -.->|"new: payment.settled"| bus["2 · Event bus"]
-  bus -.->|new| hooks["3 · Webhook dispatcher"]
-  hooks -.->|signed POST| merchant[Merchant endpoints]
-  classDef changed stroke:#0F7B74,stroke-width:3px;
-  classDef added stroke:#0F7B74,stroke-width:3px,stroke-dasharray:6 4;
-  class pay changed;
-  class bus,hooks added;
+  storefront[Storefront] -->|orders| orders[Orders]
+  orders -->|charges| payments[Payments]
+  orders --> platform[Platform]
+  payments -->|events| platform
+  platform -.->|"new: settlements"| integrations[Merchant integrations]
+  classDef blue fill:#E4ECF7,stroke:#3F6497;
+  classDef green fill:#E5F0E0,stroke:#4E7A40;
+  classDef amber fill:#F6ECD6,stroke:#8F6A16;
+  classDef rose fill:#F5E3E8,stroke:#8E4B65;
+  classDef slate fill:#E7E9EE,stroke:#525A6B;
+  class storefront blue;
+  class orders green;
+  class payments amber;
+  class platform slate;
+  class integrations rose;
 </pre>
+      </div>
       <figcaption id="fp-caption"></figcaption>
+      <div class="legend" id="system-legend"></div>
     </figure>
-    <div class="legend"><span><i></i>Changed component</span><span><i class="dash"></i>New component or connection</span><span>Numbers are stops on the walk</span></div>
   </section>
 
-  <section aria-labelledby="route-h" class="block">
-    <h2 id="route-h">Route</h2>
-    <ol class="route" id="route"></ol>
+  <section class="section" aria-labelledby="issues-h">
+    <div class="section-head">
+      <h2 id="issues-h">Issues and risks</h2>
+      <p class="hint" id="issues-hint"></p>
+    </div>
+    <div class="panel" id="issues"></div>
+  </section>
+
+  <section class="section" aria-labelledby="detail-h">
+    <div class="section-head">
+      <h2 id="detail-h">Where it changed</h2>
+      <p class="hint">Inside the touched domains. Select a numbered part to jump to its stop.</p>
+    </div>
+    <figure class="map" id="detail-map" data-comment-target>
+      <div class="scroll">
+<!-- DETAIL MAP: the floor-walk skill replaces this mermaid block. Rules: references/walk-data.md -->
+<pre class="mermaid">
+%%{init: {"themeVariables": {"fontSize": "17px"}, "flowchart": {"padding": 12}}}%%
+flowchart LR
+  subgraph orders[Orders]
+    api[Orders API]
+  end
+  subgraph payments[Payments]
+    pay["1 · Payments service"]
+    psp[(Payment provider)]
+  end
+  subgraph platform[Platform]
+    bus[Event bus]
+    settled["2 · Settlement event"]
+  end
+  subgraph integrations[Merchant integrations]
+    hooks["3 · Webhook dispatcher"]
+  end
+  merchant[Merchant endpoints]
+  api -->|charge| pay
+  pay -->|charges| psp
+  pay -.->|"new: publishes"| settled
+  settled --- bus
+  bus -.->|new| hooks
+  hooks -.->|signed POST| merchant
+  classDef modified fill:#D3ECE8,stroke:#0F7B74,stroke-width:3px;
+  classDef added fill:#E9E1F8,stroke:#6B45B8,stroke-width:3px,stroke-dasharray:6 4;
+  classDef removed fill:#F8E3E0,stroke:#B93228,stroke-width:2px,stroke-dasharray:2 3;
+  class pay modified;
+  class settled,hooks added;
+</pre>
+      </div>
+      <div class="legend">
+        <span><i class="sw modified"></i>Changed</span>
+        <span><i class="sw added"></i>New</span>
+        <span><i class="sw removed"></i>Removed</span>
+        <span><i class="sw"></i>Unchanged</span>
+        <span>Shaded areas are domains</span>
+      </div>
+    </figure>
+    <ol class="route" id="route" aria-label="Stops on this walk"></ol>
   </section>
 
   <section class="stops" id="stops" aria-label="Stops"></section>
@@ -317,6 +461,9 @@ flowchart LR
   const walk = JSON.parse(document.getElementById("walk-data").textContent);
   const isBlueprint = walk.kind === "blueprint";
   const stops = walk.stops || [];
+  const domains = walk.domains || [];
+  const domainById = Object.fromEntries(domains.map((d) => [d.id, d]));
+  const featureById = Object.fromEntries((walk.features || []).map((f) => [f.id, f]));
   const allFlags = stops.flatMap((s) => (s.flags || []).map((f) => ({ ...f, stop: s })));
   const redFlags = allFlags.filter((f) => f.level === "red");
   const yellowFlags = allFlags.filter((f) => f.level === "yellow");
@@ -338,57 +485,143 @@ flowchart LR
     return el;
   }
 
-  const CATEGORY = { "deviation": "Deviation from plan", "security": "Security & data", "blast-radius": "Blast radius", "debt": "Debt & shortcuts", "unresolved": "Unresolved review issue" };
+  const CATEGORY = { "deviation": "Deviation from plan", "security": "Security & data", "blast-radius": "Blast radius", "debt": "Debt & inefficiency", "unresolved": "Unresolved review issue" };
+  const CATEGORY_ORDER = ["deviation", "security", "blast-radius", "unresolved", "debt"];
   const CHANGE = { "new": "New", "modified": "Changed", "removed": "Removed", "unchanged": "Touched" };
+  const DOMAIN_CHANGE = { "modified": "Changed", "new": "New", "removed": "Removed", "untouched": "Unchanged" };
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ---------- masthead + summary ----------
+  // ---------- masthead + features ----------
   function renderMasthead() {
     const m = document.getElementById("masthead");
     m.replaceChildren(
       h("div", { class: "eyebrow" },
-        isBlueprint ? "Blueprint walk" : "As-built walk",
-        h("span", { "aria-hidden": "true" }, "·"),
-        `${walk.batch.id} ${walk.batch.name}`,
+        isBlueprint ? "Blueprint walk · before any code is written" : "As-built walk · what was actually built",
         walk.example ? h("span", { class: "example-tag" }, "Example data") : null),
       h("h1", {}, walk.headline),
-      h("p", { class: "lede" }, isBlueprint
-        ? "The planned route through the system, before any code is written. Redirect anything here and it costs nothing."
-        : "What was actually built. Anything that differs from the blueprint is flagged red."),
+      walk.purpose ? h("p", { class: "purpose" }, walk.purpose) : null,
       h("div", { class: "meta" },
-        walk.repo ? h("span", {}, "Repo ", h("b", { class: "mono" }, walk.repo)) : null,
-        walk.branch ? h("span", {}, "Branch ", h("b", { class: "mono" }, walk.branch), " → ", h("b", { class: "mono" }, walk.base || "main")) : null,
-        walk.generated_at ? h("span", {}, "Prepared ", h("b", {}, walk.generated_at)) : null,
+        h("span", {}, walk.batch.name, " ", h("span", { class: "idref" }, walk.batch.id)),
+        walk.branch ? h("span", { class: "idref" }, `${walk.branch} → ${walk.base || "main"}`) : null,
+        walk.generated_at ? h("span", {}, `Prepared ${walk.generated_at}`) : null,
         walk.blueprint_url ? h("a", { href: walk.blueprint_url, target: "_blank", rel: "noopener" }, "Open the blueprint walk") : null)
     );
   }
 
-  function renderSummary() {
-    const deviations = allFlags.filter((f) => f.category === "deviation").length;
-    const s = document.getElementById("summary");
-    s.replaceChildren(
-      h("div", { class: "panel" },
-        h("h3", {}, isBlueprint ? "Features in this batch" : "Features built"),
-        h("ul", { class: "features" }, (walk.features || []).map((f) =>
-          h("li", {}, h("span", { class: "fid" }, f.id),
-            h("span", {}, f.name, f.note ? h("div", { class: "hint" }, f.note) : null),
-            h("span", { class: `pill ${f.status}` }, f.status))))),
-      h("div", { class: "panel" },
-        h("h3", {}, "What needs your eyes"),
-        h("div", { class: "counts" },
-          h("div", { class: "count red" }, h("strong", {}, redFlags.length), h("span", {}, "red flags to mark")),
-          h("div", { class: "count yellow" }, h("strong", {}, yellowFlags.length), h("span", {}, "yellow, for awareness")),
-          !isBlueprint ? h("div", { class: "count" }, h("strong", {}, deviations), h("span", {}, "deviations from plan")) : null,
-          h("div", { class: "count" }, h("strong", {}, stops.length), h("span", {}, "stops"))))
-    );
+  function renderFeatures() {
+    document.getElementById("features").replaceChildren(
+      h("h3", {}, isBlueprint ? "What this batch will deliver" : "What this batch delivered"),
+      h("ul", { class: "features" }, (walk.features || []).map((f) =>
+        h("li", {},
+          h("span", { class: `pill ${f.status}` }, f.status),
+          h("div", {}, h("strong", {}, f.name), f.note ? h("div", { class: "hint" }, f.note) : null),
+          h("span", { class: "idref" }, f.id)))));
+  }
+
+  // ---------- maps ----------
+  function renderMapText() {
     document.getElementById("fp-caption").textContent = walk.floorplan_caption || "";
+    document.getElementById("system-legend").replaceChildren(
+      ...domains.map((d) => h("span", { class: `dom-${d.colour}` }, h("i", { class: "sw" }), d.name)),
+      h("span", {}, h("i", { class: "sw touched" }), "Touched by this batch"),
+      domains.some((d) => d.change === "new") ? h("span", {}, h("i", { class: "sw newdom" }), "New domain") : null);
+  }
+
+  // Mermaid renders after load, so colour and wire up the SVG whenever it appears.
+  function nodesById(root, sel, id) {
+    if (!id) return [];
+    const safe = id.replace(/[^A-Za-z0-9_]/g, "");
+    const re = new RegExp(`(^|-)${safe}(-\\d+)?$`);
+    return [...root.querySelectorAll(sel)].filter((el) => re.test(el.id || ""));
+  }
+  function makeJump(el, stop, label) {
+    el.classList.add("jump");
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "link");
+    el.setAttribute("aria-label", label);
+    el.addEventListener("click", () => goToStop(stop));
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goToStop(stop); } });
+  }
+  function goToStop(s) {
+    const t = document.getElementById(`stop-${s.id}`);
+    if (!t) return;
+    t.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    t.focus({ preventScroll: true });
+  }
+  // Mermaid shrinks a wide diagram to fit the column, which shrinks its text too.
+  // Keep it at its natural size instead; .scroll lets it scroll sideways when wider.
+  function keepNaturalSize(svg) {
+    if (svg.dataset.sized) return;
+    const w = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width : 0;
+    if (!w) return;
+    svg.dataset.sized = "1";
+    svg.style.maxWidth = "none";
+    svg.style.width = `${Math.round(w)}px`;
+    svg.style.height = "auto";
+  }
+  function enhanceMaps() {
+    document.querySelectorAll(".map svg").forEach(keepNaturalSize);
+    const sys = document.querySelector("#system-map svg");
+    if (sys && !sys.dataset.walk && sys.querySelector("g.node")) {
+      sys.dataset.walk = "1";
+      for (const d of domains) {
+        const first = stops.find((s) => s.domain === d.id);
+        for (const el of nodesById(sys, "g.node", d.id)) {
+          el.classList.add(`dom-${d.colour}`, `chg-${d.change || "untouched"}`);
+          if (first) makeJump(el, first, `${d.name}, ${DOMAIN_CHANGE[d.change] || ""}: go to its first stop`);
+        }
+      }
+    }
+    const det = document.querySelector("#detail-map svg");
+    if (det && !det.dataset.walk && det.querySelector("g.node")) {
+      det.dataset.walk = "1";
+      for (const d of domains) {
+        for (const el of nodesById(det, "g.cluster", d.id)) el.classList.add(`dom-${d.colour}`);
+      }
+      stops.forEach((s, i) => {
+        for (const el of nodesById(det, "g.node", s.node)) makeJump(el, s, `Stop ${i + 1}: ${s.title}`);
+      });
+    }
+  }
+
+  // ---------- issues ----------
+  function renderIssues() {
+    document.getElementById("issues-hint").textContent = isBlueprint
+      ? "Everything we can already foresee. Redirect anything now and it costs nothing."
+      : "Every flag on the walk. Red needs your call on its stop; yellow is for awareness.";
+    const byCategory = (a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+    const row = (f) => {
+      const i = stops.indexOf(f.stop);
+      const ack = state.acks[f.id];
+      const status = f.level !== "red" ? null
+        : !ack ? h("span", { class: "pill todo" }, "Your call")
+        : ack.verdict === "ok" ? h("span", { class: "pill pass" }, "OK")
+        : h("span", { class: "pill fail" }, "Change");
+      return h("li", { class: "issue" },
+        h("span", { class: `dot ${f.level}`, "aria-hidden": "true" }),
+        h("div", {},
+          h("a", { class: "issue-title", href: `#flag-${f.id}` }, f.title),
+          h("span", { class: "hint" }, `${CATEGORY[f.category] || f.category} · Stop ${i + 1}, ${f.stop.title}`)),
+        status);
+    };
+    const group = (title, flags) => flags.length
+      ? h("div", { class: "issue-group" }, h("h3", {}, `${title} · ${flags.length}`), h("ul", { class: "issues" }, [...flags].sort(byCategory).map(row)))
+      : null;
+    const el = document.getElementById("issues");
+    if (!allFlags.length) { el.replaceChildren(h("p", {}, "No issues, inefficiencies or risks were raised on this walk.")); return; }
+    el.replaceChildren(group("Needs your call", redFlags), group("For awareness", yellowFlags));
   }
 
   // ---------- route ----------
+  function domainChip(id) {
+    const d = domainById[id];
+    return d ? h("span", { class: `chip dom-${d.colour}` }, d.name) : null;
+  }
   function renderRoute() {
     document.getElementById("route").replaceChildren(...stops.map((s, i) =>
       h("li", {}, h("a", { href: `#stop-${s.id}` },
         h("span", { class: "num" }, i + 1),
-        h("span", {}, h("strong", {}, s.title), " ", h("span", { class: "hint mono" }, s.component || "")),
+        h("span", {}, h("strong", {}, s.title), domainChip(s.domain)),
         h("span", { class: "dots", "aria-label": flagSummary(s) },
           (s.flags || []).map((f) => h("span", { class: `dot ${f.level}` })))))));
   }
@@ -404,15 +637,20 @@ flowchart LR
   }
 
   function renderStop(s, i) {
-    const el = h("article", { class: "stop", id: `stop-${s.id}`, "data-comment-target": true },
+    const featureNames = (s.features || []).map((id) => (featureById[id] ? featureById[id].name : id));
+    const el = h("article", { class: "stop", id: `stop-${s.id}`, tabindex: "-1", "data-comment-target": true },
       h("div", { class: "stop-head" },
         h("span", { class: "num", "aria-hidden": "true" }, i + 1),
         h("div", { class: "stop-title" },
+          h("div", { class: "crumb" },
+            domainChip(s.domain),
+            h("span", {}, `Stop ${i + 1} of ${stops.length}`),
+            h("a", { class: "back", href: "#detail-map" }, "Back to map")),
           h("h2", {}, s.title),
           h("div", { class: "stop-sub" },
             h("span", { class: `pill ${s.change}` }, CHANGE[s.change] || s.change),
-            s.component ? h("span", { class: "mono" }, s.component) : null,
-            (s.features || []).length ? h("span", {}, s.features.join(", ")) : null))),
+            featureNames.length ? h("span", {}, featureNames.join(" · ")) : null,
+            s.component ? h("span", { class: "idref" }, s.component) : null))),
       h("div", { class: "twocol" },
         h("div", { class: "block" }, h("h3", {}, isBlueprint ? "What will change" : "What changed"), h("p", {}, s.what)),
         h("div", { class: "block" }, h("h3", {}, "Why"), h("p", {}, s.why))),
@@ -426,9 +664,8 @@ flowchart LR
       (s.proof || []).length ? h("div", { class: "block" }, h("h3", {}, isBlueprint ? "How we'll know it works" : "Evidence it works"),
         h("ul", { class: "proof" }, s.proof.map(renderProof))) : null,
       (s.flags || []).length ? h("div", { class: "flags" }, s.flags.map((f) => renderFlag(f, s))) : null,
-      renderCaught(s),
       renderAsk(s, i),
-      renderDiff(s));
+      renderReviewerDetail(s));
     return el;
   }
 
@@ -440,6 +677,35 @@ flowchart LR
           h("dl", { class: "ba" }, h("dt", {}, "Before"), h("dd", {}, p.before || "—"), h("dt", {}, "After"), h("dd", {}, p.after || "—"))));
     }
     return h("li", {}, h("span", { class: `pill ${status}` }, status || "test"), h("span", {}, p.text));
+  }
+
+  // Caught-in-review findings and the diff: kept for anyone who wants them, closed by default.
+  function renderReviewerDetail(s) {
+    const c = s.caught || [];
+    if (!c.length && !s.diff) return null;
+    const parts = [];
+    if (c.length) parts.push(`${c.length} caught in review`);
+    let diffBlock = null;
+    if (s.diff) {
+      const lines = s.diff.replace(/\n$/, "").split("\n");
+      let add = 0, del = 0; const files = new Set();
+      const spans = lines.map((ln) => {
+        let k = "";
+        if (ln.startsWith("diff --git")) { k = "f"; const m = ln.match(/ b\/(.+)$/); if (m) files.add(m[1]); }
+        else if (ln.startsWith("@@")) k = "h";
+        else if (ln.startsWith("+") && !ln.startsWith("+++")) { k = "a"; add++; }
+        else if (ln.startsWith("-") && !ln.startsWith("---")) { k = "d"; del++; }
+        return h("span", { class: k }, ln || " ");
+      });
+      parts.push(`diff: ${files.size} file${files.size === 1 ? "" : "s"}, +${add} −${del}`);
+      diffBlock = h("div", { class: "block" }, h("h3", {}, "Code diff"), h("div", { class: "diff-body" }, h("pre", {}, spans)));
+    }
+    return h("details", { class: "reviewer" },
+      h("summary", {}, `Reviewer detail · ${parts.join(" · ")}`),
+      c.length ? h("div", { class: "block" }, h("h3", {}, "Caught in review, fixed before you saw it"),
+        h("ul", { class: "caught" }, c.map((x) => h("li", {}, h("span", { class: "sev" }, x.severity || ""),
+          h("span", {}, x.title, x.pass ? h("span", { class: "hint" }, ` · ${x.pass}`) : null))))) : null,
+      diffBlock);
   }
 
   function renderFlag(f, s) {
@@ -539,32 +805,6 @@ flowchart LR
       ta.focus();
     }
     return wrap;
-  }
-
-  function renderCaught(s) {
-    const c = s.caught || [];
-    if (!c.length) return null;
-    return h("details", { class: "caught" },
-      h("summary", {}, `Caught in review · ${c.length} fixed before you saw it`),
-      h("ul", {}, c.map((x) => h("li", {}, h("span", { class: "sev" }, x.severity || ""),
-        h("span", {}, x.title, x.pass ? h("span", { class: "hint" }, ` · ${x.pass}`) : null)))));
-  }
-
-  function renderDiff(s) {
-    if (!s.diff) return null;
-    const lines = s.diff.replace(/\n$/, "").split("\n");
-    let add = 0, del = 0; const files = new Set();
-    const spans = lines.map((ln) => {
-      let c = "";
-      if (ln.startsWith("diff --git")) { c = "f"; const m = ln.match(/ b\/(.+)$/); if (m) files.add(m[1]); }
-      else if (ln.startsWith("@@")) c = "h";
-      else if (ln.startsWith("+") && !ln.startsWith("+++")) { c = "a"; add++; }
-      else if (ln.startsWith("-") && !ln.startsWith("---")) { c = "d"; del++; }
-      return h("span", { class: c }, ln || " ");
-    });
-    return h("details", { class: "diff" },
-      h("summary", {}, "Full diff · ", h("span", { class: "mono" }, `${files.size} file${files.size === 1 ? "" : "s"}, +${add} −${del}`)),
-      h("div", { class: "diff-body" }, h("pre", {}, spans)));
   }
 
   // ---------- review bar ----------
@@ -682,10 +922,13 @@ flowchart LR
       if (focusedNote) continue; // never yank a textarea out from under the reviewer
       old.replaceWith(renderFlag(f, f.stop));
     }
+    renderIssues();
   }
 
   // ---------- boot ----------
-  renderMasthead(); renderSummary(); renderRoute(); renderStops(); renderBar();
+  renderMasthead(); renderFeatures(); renderMapText(); renderIssues(); renderRoute(); renderStops(); renderBar();
+  enhanceMaps();
+  new MutationObserver(enhanceMaps).observe(document.querySelector("main"), { childList: true, subtree: true });
 
   (async () => {
     const cl = window.claude;

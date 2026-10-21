@@ -39,7 +39,7 @@ Explore the repository at orientation depth only:
 Do not trace specific business logic, concepts, or end-to-end flows here — leave that to whichever skill consumes the map.
 
 Draft the top-level map using `templates/ARCHITECTURE.md`:
-- The Mermaid diagram should show domain/service-level boundaries and dependencies only — roughly 10-20 nodes, not individual files or classes.
+- The **Domain map** shows one node per domain (roughly 4-10) and how they depend on each other. The **Structure overview** shows components (roughly 10-20 nodes, not individual files or classes), grouped into one subgraph per domain. Both follow the "Canonical maps" rules below.
 - Every path reference (domains, apps/packages, docs) goes in a markdown table under a column literally named `Path`, so it can be mechanically verified later.
 
 **Apply the size budget.** Keep the top-level `ARCHITECTURE.md` under roughly 300 lines. If including a domain's full detail inline would push the file past that, split that domain out:
@@ -56,12 +56,31 @@ python3 scripts/verify_paths.py <repo-root> ARCHITECTURE.md .architecture/domain
 ```
 against every file just written. Fix any reported `MISSING` paths (either the path is wrong, or the referenced code doesn't actually exist and the row should be corrected or removed) before reporting completion.
 
+### Canonical maps
+
+The `floor-walk` skill copies the Domain map verbatim onto every walk and builds its detail map from the Structure overview. The user reads many walks, so the picture must look the same each time. Treat both diagrams as canonical:
+
+- **Ids.** Each domain has a short snake_case id (`payments`, `web_app`). It is the Domain map node id, the Structure overview subgraph id and the `Id` column in the Domains table. Component node ids are snake_case too, with no hyphens. Never rename an id once it's written.
+- **Colours.** Give each domain one colour from this palette, in order, the first time it appears: `blue`, `green`, `amber`, `rose`, `slate`, `sand`. Past six, reuse them, but never on two domains that touch on the Domain map. Never reassign a colour. Teal, purple and red are left out on purpose: floor walks use them for modified, new and removed parts. Every colour used gets a `classDef` line from this list, and each domain node a matching `class` line:
+
+  | Colour | classDef |
+  |---|---|
+  | `blue` | `fill:#E4ECF7,stroke:#3F6497` |
+  | `green` | `fill:#E5F0E0,stroke:#4E7A40` |
+  | `amber` | `fill:#F6ECD6,stroke:#8F6A16` |
+  | `rose` | `fill:#F5E3E8,stroke:#8E4B65` |
+  | `slate` | `fill:#E7E9EE,stroke:#525A6B` |
+  | `sand` | `fill:#EFE7DC,stroke:#76603F` |
+
+- **Layout.** Mermaid lays out nodes in the order they're declared, so keep that order. Add new domains and components at the end (of their subgraph, for components), and delete removed ones in place. Don't tidy, reorder or relabel what's still accurate.
+
 ### Targeted refresh (preferred when stale, not missing)
 
 When a map already exists but is stale:
 
 1. If the top-level map's frontmatter has a `generated_at_commit` and the repo is a git repo, run `git diff --stat <generated_at_commit>..HEAD` plus `git status --porcelain` to see which paths changed since generation.
-2. If the changes are confined to one or a few domains, re-explore and update only those domains — their entries in the top-level table, and their sub-map file if they have one. Leave everything else as-is.
+2. If the changes are confined to one or a few domains, re-explore and update only those domains — their entries in the top-level table, their nodes in both diagrams (following "Canonical maps"), and their sub-map file if they have one. Leave everything else as-is.
+   - If the existing map has no Domain map, or no `Id`/`Colour` columns (it predates them), add them now: assign ids and colours, and build the Domain map from the existing diagram's groupings. That's a one-time upgrade, not a full regeneration.
 3. If the changes are broad (touch most top-level areas), or there's no `generated_at_commit` to diff from (non-git fallback was used), do a full regeneration instead — targeted refresh isn't worth the bookkeeping at that point.
 4. Update `staleness_key`, `generated_at_commit`, and `generated_at` in the frontmatter of every file touched (top-level always, since its own staleness key changed; sub-maps only if their content changed).
 5. Re-run `scripts/verify_paths.py` (see above) against every file touched before finishing.

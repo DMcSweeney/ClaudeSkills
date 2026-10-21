@@ -84,6 +84,8 @@ Follow the map rules in `references/walk-data.md`. In short:
 - **System map:** the Domain map from `ARCHITECTURE.md`, copied verbatim. Append a domain this batch adds, never rearrange. Fill `domains` with every domain on it, its colour from `ARCHITECTURE.md`, and its change for this batch. The page colours it, so the same domain is the same colour on every walk.
 - **Detail map:** from the Structure overview, the touched domains as subgraphs (tinted by domain) with the touched components and their neighbours, reusing the canonical ids. Number the stops in the labels, mark change type with the `modified` / `added` / `removed` classes (teal / purple / red; untouched is grey), and label the new connections. Set each stop's `domain` and `node`.
 
+The page shows each map fitted whole, with drag and zoom and a full-window view, so don't restyle a map or trim it to make it fit.
+
 Write the `floorplan_caption` as the one thing the reader should see ("Only Payments changes inside; a new Merchant integrations domain hangs off it").
 
 ## Step 5 — Build and publish the page

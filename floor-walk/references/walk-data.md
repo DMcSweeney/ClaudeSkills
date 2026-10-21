@@ -78,7 +78,9 @@ The walk page (`templates/walk.html`) renders entirely from the JSON block with 
 
 ## Maps (mermaid)
 
-The page has two maps. Their look comes from the page (colours follow light/dark mode), driven by `domains`, the node ids and four class names, so don't add `style` lines or extra `classDef` colours.
+The page has two maps. Their look comes from the page (colours follow light/dark mode), driven by `domains`, the node ids and four class names. The page overrides any `classDef` colours on nodes in both themes, so they never show through; don't add `style` lines or extra `classDef` colours.
+
+Each map opens fitted whole in its own viewer: the reader drags to pan, zooms with ctrl/⌘+scroll, pinch or the buttons, and can expand it to the full window. Big maps are fine to read this way, so keep to the node budgets below rather than trimming for size.
 
 Start each map's mermaid block with this line, which sets the larger text size the page is designed for (on the system map it is the only line added above the verbatim copy):
 
@@ -103,7 +105,7 @@ Built from the **Structure overview** in `ARCHITECTURE.md`:
 - Keep a `subgraph` for each touched domain, with the domain id as the subgraph id and the domain name as its label: `subgraph payments[Payments]`. The page tints each subgraph in its domain's colour.
 - Inside it, keep the touched components plus enough neighbours to show where things connect. Direct neighbours in other domains come with their own subgraph. Reuse the canonical node ids. Aim for 5-15 nodes.
 - Prefix each stop's node label with its stop number, `"1 · Payments service"`, and set that stop's `node` to the node id.
-- Mark change type with these class names only: `modified` (teal), `added` (purple, dashed), `removed` (red, dotted), using the `classDef` lines in the example below exactly (they're the fallback colours if the page's own styling can't reach the diagram). Untouched nodes get no class and show grey with a dark border.
+- Mark change type with these class names only: `modified` (teal), `added` (purple, dashed), `removed` (red, dotted), using the `classDef` lines in the example below exactly (the page overrides them; they keep the colours if the map is rendered on its own). Untouched nodes get no class and show grey with a dark border.
 - New connections are dotted (`-.->`) with a label starting `new:`; removed ones get a label starting `removed:`. Label every edge whose meaning isn't obvious (`writes`, `publishes`, `POST`).
 - Node ids are snake_case with no hyphens (the page finds nodes by id).
 
@@ -128,7 +130,7 @@ flowchart LR
   class bus added;
 ```
 
-Both maps are clickable on the page: a numbered node jumps to its stop, and a domain jumps to its first stop.
+Both maps are clickable on the page: a numbered node jumps to its stop, and a domain jumps to its first stop. Each stop's "Back to map" link pans the detail map to that stop's `node`.
 
 ## Database (written by the page, read by Claude)
 

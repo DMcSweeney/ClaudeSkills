@@ -107,27 +107,47 @@ a { color: var(--route); }
 .dom-sand { --c-fill: var(--sand-fill); --c-line: var(--sand-line); }
 
 .map { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 10px; scroll-margin-top: 16px; }
-.map .scroll { overflow-x: auto; }
-.map pre.mermaid { margin: 0; background: transparent; text-align: center; }
 .map figcaption { color: var(--muted); font-size: 13px; }
-.map svg g.node { --n-fill: var(--surface); --n-stroke: var(--muted); --n-width: 1.5px; --n-dash: none; }
-.map svg g.node :is(rect, polygon, circle, ellipse, path) { fill: var(--n-fill) !important; stroke: var(--n-stroke) !important; stroke-width: var(--n-width) !important; stroke-dasharray: var(--n-dash) !important; }
-.map svg g.node.modified { --n-fill: var(--mod-soft); --n-stroke: var(--mod); --n-width: 3px; }
-.map svg g.node.added { --n-fill: var(--new-soft); --n-stroke: var(--new); --n-width: 3px; --n-dash: 6 4; }
-.map svg g.node.removed { --n-fill: var(--red-soft); --n-stroke: var(--red); --n-width: 2.5px; --n-dash: 2 3; }
-.map svg g.node[class*="dom-"] { --n-fill: var(--c-fill); --n-stroke: var(--c-line); }
-.map svg g.node.chg-modified { --n-stroke: var(--ink); --n-width: 3px; }
-.map svg g.node.chg-new { --n-stroke: var(--new); --n-width: 3px; --n-dash: 6 4; }
-.map svg g.node.chg-removed { --n-stroke: var(--red); --n-width: 2.5px; --n-dash: 2 3; }
-.map svg g.cluster > rect { fill: var(--c-fill, var(--ground)) !important; stroke: var(--c-line, var(--muted)) !important; stroke-width: 1.5px !important; }
-.map svg .nodeLabel, .map svg .cluster-label, .map svg .edgeLabel, .map svg span { color: var(--ink) !important; }
-.map svg text { fill: var(--ink) !important; }
-.map svg .edgeLabel, .map svg .edgeLabel p, .map svg .labelBkg { background: var(--surface) !important; }
-.map svg .edgeLabel rect { fill: var(--surface) !important; }
-.map svg .flowchart-link { stroke: var(--muted) !important; }
-.map svg marker path { fill: var(--muted) !important; stroke: var(--muted) !important; }
-.map svg g.node.jump { cursor: pointer; }
-.map svg g.node.jump:hover, .map svg g.node.jump:focus-visible { --n-width: 4px; outline: none; }
+/* The viewer: a fitted overview you drag to pan and ctrl/⌘+scroll or pinch to zoom. The script sets its height. */
+.map-tools { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; }
+.map-tools .hint { font-size: 12px; }
+.map-tools .btns { display: flex; gap: 4px; }
+.map-tools button { font: 600 13px/1 var(--font-body); min-width: 32px; height: 30px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+.map-tools button:hover { background: var(--ground); }
+.map .viewport { position: relative; overflow: hidden; height: 240px; border-radius: 6px; background: var(--ground); cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.map .viewport.dragging { cursor: grabbing; }
+.map .viewport pre.mermaid { position: absolute; top: 0; left: 0; margin: 0; background: transparent; }
+.map .viewport svg { display: block; max-width: none !important; transform-origin: 0 0; }
+.map .viewport svg.glide { transition: transform 350ms ease; }
+.map.expanded { position: fixed; inset: 0; z-index: 30; border: 0; border-radius: 0; grid-template-rows: auto minmax(0, 1fr) auto auto; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.map.expanded .viewport { height: auto !important; touch-action: none; }
+.map-open body { overflow: hidden; }
+/* Mermaid scopes its own rules (and every classDef, with !important) under the diagram's id,
+   so these need an id too or a pale classDef fill wins while the text follows the theme. */
+:is(#system-map, #detail-map) svg g.node { --n-fill: var(--surface); --n-stroke: var(--muted); --n-width: 1.5px; --n-dash: none; }
+:is(#system-map, #detail-map) svg g.node :is(rect, polygon, circle, ellipse, path) { fill: var(--n-fill) !important; stroke: var(--n-stroke) !important; stroke-width: var(--n-width) !important; stroke-dasharray: var(--n-dash) !important; }
+:is(#system-map, #detail-map) svg g.node.modified { --n-fill: var(--mod-soft); --n-stroke: var(--mod); --n-width: 3px; }
+:is(#system-map, #detail-map) svg g.node.added { --n-fill: var(--new-soft); --n-stroke: var(--new); --n-width: 3px; --n-dash: 6 4; }
+:is(#system-map, #detail-map) svg g.node.removed { --n-fill: var(--red-soft); --n-stroke: var(--red); --n-width: 2.5px; --n-dash: 2 3; }
+:is(#system-map, #detail-map) svg g.node[class*="dom-"] { --n-fill: var(--c-fill); --n-stroke: var(--c-line); }
+:is(#system-map, #detail-map) svg g.node.chg-modified { --n-stroke: var(--ink); --n-width: 3px; }
+:is(#system-map, #detail-map) svg g.node.chg-new { --n-stroke: var(--new); --n-width: 3px; --n-dash: 6 4; }
+:is(#system-map, #detail-map) svg g.node.chg-removed { --n-stroke: var(--red); --n-width: 2.5px; --n-dash: 2 3; }
+:is(#system-map, #detail-map) svg g.cluster > rect { fill: var(--c-fill, var(--ground)) !important; stroke: var(--c-line, var(--muted)) !important; stroke-width: 1.5px !important; }
+:is(#system-map, #detail-map) svg :is(.nodeLabel, .cluster-label, .edgeLabel, .label, span, p, div) { color: var(--ink) !important; }
+:is(#system-map, #detail-map) svg text { fill: var(--ink) !important; }
+:is(#system-map, #detail-map) svg :is(.edgeLabel, .edgeLabel p, .labelBkg) { background: var(--surface) !important; }
+:is(#system-map, #detail-map) svg .edgeLabel rect { fill: var(--surface) !important; }
+:is(#system-map, #detail-map) svg .flowchart-link { stroke: var(--muted) !important; }
+:is(#system-map, #detail-map) svg marker path { fill: var(--muted) !important; stroke: var(--muted) !important; }
+:is(#system-map, #detail-map) svg g.node.jump { cursor: pointer; }
+:is(#system-map, #detail-map) svg g.node.jump:hover, :is(#system-map, #detail-map) svg g.node.jump:focus-visible { --n-width: 4px; outline: none; }
+:is(#system-map, #detail-map) svg g.node.pulse { animation: node-pulse 700ms ease-in-out 3; }
+@keyframes node-pulse { 50% { filter: drop-shadow(0 0 8px var(--route)); } }
+@media (prefers-reduced-motion: reduce) {
+  :is(#system-map, #detail-map) svg g.node.pulse { animation: none; filter: drop-shadow(0 0 6px var(--route)); }
+  .map .viewport svg.glide { transition: none; }
+}
 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); align-items: center; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -155,7 +175,7 @@ a { color: var(--route); }
 .route { list-style: none; margin: 0; padding: 0; display: grid; }
 .route li a { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none; }
 .route li a:hover { background: var(--ground); }
-.route li a > span { min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.route li a > span:not(.num, .dots) { min-width: 0; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
 .num { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--route); color: var(--route); display: grid; place-items: center; font: 700 14px/1 var(--font-display); font-variant-numeric: tabular-nums; }
 
 .stops { display: grid; gap: 28px; }
@@ -364,7 +384,7 @@ details.reviewer[open] { display: grid; gap: 12px; }
       <p class="hint">The same map on every walk. Outlined domains are the ones this batch touches.</p>
     </div>
     <figure class="map" id="system-map" data-comment-target>
-      <div class="scroll">
+      <div class="viewport">
 <!-- SYSTEM MAP: the floor-walk skill replaces this mermaid block with the Domain map from ARCHITECTURE.md, verbatim. -->
 <pre class="mermaid">
 %%{init: {"themeVariables": {"fontSize": "17px"}, "flowchart": {"padding": 12}}}%%
@@ -405,7 +425,7 @@ flowchart LR
       <p class="hint">Inside the touched domains. Select a numbered part to jump to its stop.</p>
     </div>
     <figure class="map" id="detail-map" data-comment-target>
-      <div class="scroll">
+      <div class="viewport">
 <!-- DETAIL MAP: the floor-walk skill replaces this mermaid block. Rules: references/walk-data.md -->
 <pre class="mermaid">
 %%{init: {"themeVariables": {"fontSize": "17px"}, "flowchart": {"padding": 12}}}%%
@@ -545,41 +565,194 @@ flowchart LR
   function goToStop(s) {
     const t = document.getElementById(`stop-${s.id}`);
     if (!t) return;
+    if (openViewer) setExpanded(openViewer, false);
     t.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     t.focus({ preventScroll: true });
   }
-  // Mermaid shrinks a wide diagram to fit the column, which shrinks its text too.
-  // Keep it at its natural size instead; .scroll lets it scroll sideways when wider.
-  function keepNaturalSize(svg) {
-    if (svg.dataset.sized) return;
-    const w = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width : 0;
-    if (!w) return;
-    svg.dataset.sized = "1";
-    svg.style.maxWidth = "none";
-    svg.style.width = `${Math.round(w)}px`;
-    svg.style.height = "auto";
+  function backToMap(s) {
+    const v = viewers["detail-map"];
+    v.fig.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    const node = v.svg && nodesById(v.svg, "g.node", s.node)[0];
+    if (!node) return;
+    focusOn(v, node);
+    node.focus({ preventScroll: true });
+    node.classList.remove("pulse");
+    void node.getBoundingClientRect();
+    node.classList.add("pulse");
+    setTimeout(() => node.classList.remove("pulse"), 2200);
   }
+
+  // ---------- map viewer ----------
+  // Each map opens fitted whole. Drag pans; ctrl/⌘+scroll or pinch zooms (plain scroll in the
+  // expanded view). The svg is kept at its natural size and moved with a CSS transform.
+  const viewers = {};
+  let openViewer = null;
+  function setupViewer(fig) {
+    const vp = fig.querySelector(".viewport");
+    const v = { fig, vp, svg: null, W: 0, H: 0, k: 1, x: 0, y: 0, fitK: 1, moved: false, dragged: false };
+    const zoomBy = (f) => zoomAt(v, f, vp.clientWidth / 2, vp.clientHeight / 2);
+    v.hint = h("span", { class: "hint" });
+    v.expandBtn = h("button", { type: "button", onclick: () => setExpanded(v, !fig.classList.contains("expanded")) });
+    fig.prepend(h("div", { class: "map-tools" }, v.hint,
+      h("div", { class: "btns" },
+        h("button", { type: "button", "aria-label": "Zoom out", onclick: () => zoomBy(1 / 1.4) }, "−"),
+        h("button", { type: "button", "aria-label": "Zoom in", onclick: () => zoomBy(1.4) }, "+"),
+        h("button", { type: "button", "aria-label": "Fit the whole map", onclick: () => fit(v) }, "Fit"),
+        v.expandBtn)));
+    setExpandedLabels(v, false);
+
+    const pts = new Map();
+    let start = null;
+    vp.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 1) { v.dragged = false; start = { x: e.clientX, y: e.clientY }; }
+    });
+    vp.addEventListener("pointermove", (e) => {
+      const p = pts.get(e.pointerId);
+      if (!p || !v.svg) return;
+      if (pts.size === 1) {
+        if (!v.dragged && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 4) return;
+        if (!v.dragged) { v.dragged = true; vp.setPointerCapture(e.pointerId); vp.classList.add("dragging"); }
+        v.x += e.clientX - p.x; v.y += e.clientY - p.y;
+        v.moved = true; clampPan(v); apply(v);
+      } else if (pts.size === 2) {
+        const [a, b] = [...pts.values()];
+        const before = Math.hypot(a.x - b.x, a.y - b.y);
+        p.x = e.clientX; p.y = e.clientY;
+        const after = Math.hypot(a.x - b.x, a.y - b.y);
+        const r = vp.getBoundingClientRect();
+        v.dragged = true;
+        if (before > 0) zoomAt(v, after / before, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+      }
+      p.x = e.clientX; p.y = e.clientY;
+    });
+    const end = (e) => {
+      pts.delete(e.pointerId);
+      if (!pts.size) vp.classList.remove("dragging");
+      else start = { ...pts.values().next().value };
+    };
+    vp.addEventListener("pointerup", end);
+    vp.addEventListener("pointercancel", end);
+    // A drag that ends over a node must not also count as a click on it.
+    vp.addEventListener("click", (e) => { if (v.dragged) { e.stopPropagation(); e.preventDefault(); v.dragged = false; } }, true);
+    vp.addEventListener("wheel", (e) => {
+      if (!v.svg || (!fig.classList.contains("expanded") && !e.ctrlKey && !e.metaKey)) return;
+      e.preventDefault();
+      const r = vp.getBoundingClientRect();
+      zoomAt(v, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0025)), e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+    viewers[fig.id] = v;
+  }
+  // Called whenever mermaid (re)draws a map, or finishes laying one out.
+  function attachSvg(v, svg) {
+    const box = svg.viewBox && svg.viewBox.baseVal;
+    if (!box || !box.width) return;
+    const dims = `${box.width}x${box.height}`;
+    if (v.svg === svg && svg.dataset.viewer === dims) return;
+    svg.dataset.viewer = dims;
+    v.svg = svg; v.W = box.width; v.H = box.height;
+    svg.style.width = `${v.W}px`;
+    svg.style.height = `${v.H}px`;
+    size(v); fit(v);
+  }
+  function size(v) {
+    if (v.fig.classList.contains("expanded") || !v.W) return;
+    const cap = Math.max(220, window.innerHeight * 0.6);
+    v.vp.style.height = `${Math.round(Math.min(cap, Math.max(140, v.H * Math.min(1, v.vp.clientWidth / v.W) + 16)))}px`;
+  }
+  function fit(v) {
+    if (!v.W) return;
+    const vw = v.vp.clientWidth, vh = v.vp.clientHeight;
+    v.fitK = v.k = Math.min(1, (vw - 16) / v.W, (vh - 16) / v.H);
+    v.x = (vw - v.W * v.k) / 2; v.y = (vh - v.H * v.k) / 2;
+    v.moved = false; apply(v);
+  }
+  function apply(v) { v.svg.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.k})`; }
+  // Keep the map in view: centred when it fits on an axis, otherwise edge-to-edge at most.
+  function clampPan(v) {
+    const vw = v.vp.clientWidth, vh = v.vp.clientHeight, w = v.W * v.k, hh = v.H * v.k;
+    v.x = w <= vw ? (vw - w) / 2 : Math.min(8, Math.max(vw - w - 8, v.x));
+    v.y = hh <= vh ? (vh - hh) / 2 : Math.min(8, Math.max(vh - hh - 8, v.y));
+  }
+  function zoomAt(v, factor, cx, cy) {
+    if (!v.svg) return;
+    const k = Math.min(3, Math.max(v.fitK * 0.6, v.k * factor));
+    v.x = cx - (cx - v.x) * (k / v.k); v.y = cy - (cy - v.y) * (k / v.k);
+    v.k = k; v.moved = true; clampPan(v); apply(v);
+  }
+  // Pan and zoom so a node sits in the middle at a readable size.
+  function focusOn(v, el) {
+    const r = el.getBoundingClientRect(), s = v.svg.getBoundingClientRect();
+    const nx = (r.left + r.width / 2 - s.left) / v.k, ny = (r.top + r.height / 2 - s.top) / v.k;
+    v.k = Math.max(v.fitK, 1);
+    v.x = v.vp.clientWidth / 2 - nx * v.k; v.y = v.vp.clientHeight / 2 - ny * v.k;
+    v.moved = true; clampPan(v);
+    v.svg.classList.add("glide"); apply(v);
+    setTimeout(() => v.svg && v.svg.classList.remove("glide"), 400);
+  }
+  function setExpandedLabels(v, on) {
+    v.hint.textContent = on ? "Drag to move · scroll or pinch to zoom · Esc to close" : "Drag to move · Ctrl/⌘ + scroll or pinch to zoom";
+    v.expandBtn.textContent = on ? "Close" : "Expand";
+    v.expandBtn.setAttribute("aria-label", on ? "Close the full-window map" : "Open the map full-window");
+  }
+  function setExpanded(v, on) {
+    v.fig.classList.toggle("expanded", on);
+    document.documentElement.classList.toggle("map-open", on);
+    setExpandedLabels(v, on);
+    if (on) { v.returnFocus = document.activeElement; openViewer = v; v.expandBtn.focus(); }
+    else {
+      openViewer = null;
+      if (v.returnFocus && v.returnFocus.isConnected) v.returnFocus.focus({ preventScroll: true });
+    }
+    requestAnimationFrame(() => { size(v); fit(v); if (!on) v.fig.scrollIntoView({ block: "nearest" }); });
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && openViewer) setExpanded(openViewer, false); });
+  let resizeQueued = false;
+  window.addEventListener("resize", () => {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => {
+      resizeQueued = false;
+      for (const v of Object.values(viewers)) {
+        if (!v.svg) continue;
+        size(v);
+        if (v.moved) { clampPan(v); apply(v); } else fit(v);
+      }
+    });
+  });
+
+  // Mermaid draws in steps (nodes before subgraphs), so this runs once drawing settles
+  // and is safe to repeat.
   function enhanceMaps() {
-    document.querySelectorAll(".map svg").forEach(keepNaturalSize);
+    for (const v of Object.values(viewers)) {
+      const svg = v.vp.querySelector("svg");
+      if (!svg) continue;
+      // classDef colours arrive as inline !important styles, which no stylesheet can override.
+      for (const el of svg.querySelectorAll("g.node :is(rect, polygon, circle, ellipse, path)")) {
+        for (const prop of ["fill", "stroke", "stroke-width", "stroke-dasharray"]) el.style.removeProperty(prop);
+      }
+      attachSvg(v, svg);
+    }
     const sys = document.querySelector("#system-map svg");
-    if (sys && !sys.dataset.walk && sys.querySelector("g.node")) {
-      sys.dataset.walk = "1";
+    if (sys) {
       for (const d of domains) {
         const first = stops.find((s) => s.domain === d.id);
         for (const el of nodesById(sys, "g.node", d.id)) {
           el.classList.add(`dom-${d.colour}`, `chg-${d.change || "untouched"}`);
-          if (first) makeJump(el, first, `${d.name}, ${DOMAIN_CHANGE[d.change] || ""}: go to its first stop`);
+          if (first && !el.classList.contains("jump")) makeJump(el, first, `${d.name}, ${DOMAIN_CHANGE[d.change] || ""}: go to its first stop`);
         }
       }
     }
     const det = document.querySelector("#detail-map svg");
-    if (det && !det.dataset.walk && det.querySelector("g.node")) {
-      det.dataset.walk = "1";
+    if (det) {
       for (const d of domains) {
         for (const el of nodesById(det, "g.cluster", d.id)) el.classList.add(`dom-${d.colour}`);
       }
       stops.forEach((s, i) => {
-        for (const el of nodesById(det, "g.node", s.node)) makeJump(el, s, `Stop ${i + 1}: ${s.title}`);
+        for (const el of nodesById(det, "g.node", s.node)) {
+          if (!el.classList.contains("jump")) makeJump(el, s, `Stop ${i + 1}: ${s.title}`);
+        }
       });
     }
   }
@@ -645,7 +818,7 @@ flowchart LR
           h("div", { class: "crumb" },
             domainChip(s.domain),
             h("span", {}, `Stop ${i + 1} of ${stops.length}`),
-            h("a", { class: "back", href: "#detail-map" }, "Back to map")),
+            s.node ? h("a", { class: "back", href: "#detail-map", onclick: (e) => { e.preventDefault(); backToMap(s); } }, "Back to map") : null),
           h("h2", {}, s.title),
           h("div", { class: "stop-sub" },
             h("span", { class: `pill ${s.change}` }, CHANGE[s.change] || s.change),
@@ -926,9 +1099,12 @@ flowchart LR
   }
 
   // ---------- boot ----------
+  document.querySelectorAll(".map").forEach(setupViewer);
   renderMasthead(); renderFeatures(); renderMapText(); renderIssues(); renderRoute(); renderStops(); renderBar();
   enhanceMaps();
-  new MutationObserver(enhanceMaps).observe(document.querySelector("main"), { childList: true, subtree: true });
+  let enhanceTimer = 0;
+  new MutationObserver(() => { clearTimeout(enhanceTimer); enhanceTimer = setTimeout(enhanceMaps, 80); })
+    .observe(document.querySelector("main"), { childList: true, subtree: true });
 
   (async () => {
     const cl = window.claude;
